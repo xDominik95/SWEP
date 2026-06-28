@@ -1,8 +1,11 @@
 let currentUser = null;
 let currentProfile = null;
+let vehicleCache = [];
+let documentCache = [];
 
 function msg(id, text, ok=true){
   const el=document.getElementById(id);
+  if(!el) return;
   el.textContent=text;
   el.style.color=ok?'#187a2f':'#b00020';
 }
@@ -12,12 +15,22 @@ function today(){
 }
 
 async function init(){
-  document.getElementById('docDate').value=today();
-  document.getElementById('r_data').value=today();
-  document.getElementById('z_data').value=today();
+  setDefaultDates();
 
   const { data } = await supabaseClient.auth.getSession();
   if(data.session) await enterApp(data.session.user);
+
+  supabaseClient.auth.onAuthStateChange((_event, session) => {
+    if(session?.user) enterApp(session.user);
+  });
+}
+
+function setDefaultDates(){
+  const ids = ['docDate','r_data','z_data'];
+  ids.forEach(id => {
+    const el = document.getElementById(id);
+    if(el && !el.value) el.value = today();
+  });
 }
 
 async function login(){
@@ -26,10 +39,6 @@ async function login(){
   const { data, error } = await supabaseClient.auth.signInWithPassword({email,password});
   if(error) return msg('loginMsg', error.message, false);
   await enterApp(data.user);
-}
-
-function showRegister(){
-  msg('loginMsg','Konto najlepiej tworzyć w Supabase → Authentication → Users → Add user. Potem wpisz dane użytkownika w tabeli profile.',false);
 }
 
 async function logout(){
@@ -58,20 +67,44 @@ async function enterApp(user){
   }
 
   currentProfile=profile;
-  document.getElementById('userInfo').textContent = `${profile.stopien || ''} ${profile.imie_nazwisko || user.email} | ${profile.email || user.email}`;
+  const displayName = `${profile.stopien || ''} ${profile.imie_nazwisko || user.email}`.trim();
+  document.getElementById('userInfo').textContent = `${displayName} | ${profile.email || user.email}`;
   document.getElementById('rolePill').textContent = profile.rola || 'funkcjonariusz';
+  document.getElementById('statRole').textContent = profile.rola || 'funkcjonariusz';
 
-  document.getElementById('docOfficer').value = `${profile.stopien || ''} ${profile.imie_nazwisko || ''}`.trim();
+  document.getElementById('docOfficer').value = displayName;
   document.getElementById('docBadge').value = profile.numer_sluzbowy || '';
   document.getElementById('r_pobierajacy').value = profile.imie_nazwisko || '';
   document.getElementById('z_zdajacy').value = profile.imie_nazwisko || '';
 
-  if(['admin','dowodca'].includes(profile.rola)){
+  if(isCommander()){
     document.querySelectorAll('.commander-only').forEach(e=>e.classList.remove('hidden'));
   }
 
-  loadVehicleCards();
-  loadMyDocuments();
+  await refreshAll();
+}
+
+function isCommander(){
+  return ['admin','dowodca'].includes(currentProfile?.rola);
+}
+
+async function refreshAll(){
+  await loadVehicleCards();
+  await loadMyDocuments();
+  if(isCommander()){
+    await loadCommanderDocuments();
+    await loadProfiles();
+  }
+  updateStats();
+}
+
+function refreshCurrentPage(){
+  const activePage = [...document.querySelectorAll('.page')].find(p=>!p.classList.contains('hidden'))?.id;
+  if(activePage === 'vehicles') loadVehicleCards();
+  else if(activePage === 'documents') loadMyDocuments();
+  else if(activePage === 'commanderDocs') loadCommanderDocuments();
+  else if(activePage === 'users') loadProfiles();
+  else refreshAll();
 }
 
 function showPage(id, btn){
@@ -91,13 +124,19 @@ function showPage(id, btn){
   if(id==='users') loadProfiles();
 }
 
-async function saveVehicleCard(){
+function quickPage(id){
+  const btn = [...document.querySelectorAll('.nav')].find(b => b.getAttribute('onclick')?.includes(`'${id}'`));
+  showPage(id, btn);
+}
+
+async function saveVehicleCard(e){
+  e.preventDefault();
   const row = {
     created_by: currentProfile?.imie_nazwisko || currentUser.email,
     status: document.getElementById('z_przebieg').value ? 'Zakończony' : 'W patrolu',
-    pojazd: document.getElementById('v_pojazd').value,
-    krypton: document.getElementById('v_krypton').value,
-    numer_rejestracyjny: document.getElementById('v_rej').value,
+    pojazd: val('v_pojazd'),
+    krypton: val('v_krypton'),
+    numer_rejestracyjny: val('v_rej'),
 
     rozpoczecie_przebieg: num('r_przebieg'),
     rozpoczecie_godzina: val('r_godzina'),
@@ -119,7 +158,11 @@ async function saveVehicleCard(){
   const { error } = await supabaseClient.from('karty_pojazdow').insert(row);
   if(error) return msg('vehicleMsg', error.message, false);
   msg('vehicleMsg','Karta pojazdu została zapisana.');
-  loadVehicleCards();
+  e.target.reset();
+  setDefaultDates();
+  document.getElementById('r_pobierajacy').value = currentProfile?.imie_nazwisko || '';
+  document.getElementById('z_zdajacy').value = currentProfile?.imie_nazwisko || '';
+  await loadVehicleCards();
 }
 
 function val(id){ return document.getElementById(id).value || null; }
@@ -127,17 +170,33 @@ function num(id){ const v=document.getElementById(id).value; return v===''?null:
 
 async function loadVehicleCards(){
   const { data, error } = await supabaseClient.from('karty_pojazdow').select('*').order('created_at',{ascending:false}).limit(50);
+  if(error){
+    document.getElementById('vehicleRows').innerHTML=`<tr><td colspan="7">${error.message}</td></tr>`;
+    return;
+  }
+  vehicleCache = data || [];
+  renderVehicleCards();
+  updateStats();
+}
+
+function renderVehicleCards(){
+  const search = (document.getElementById('vehicleSearch')?.value || '').toLowerCase();
+  const rows = vehicleCache.filter(r => {
+    const hay = `${r.pojazd||''} ${r.krypton||''} ${r.numer_rejestracyjny||''} ${r.rozpoczecie_pobierajacy||''} ${r.zakonczenie_zdajacy||''}`.toLowerCase();
+    return hay.includes(search);
+  });
+
   const tbody=document.getElementById('vehicleRows');
-  if(error){ tbody.innerHTML=`<tr><td colspan="6">${error.message}</td></tr>`; return; }
-  tbody.innerHTML=(data||[]).map(r=>`
+  tbody.innerHTML=rows.map(r=>`
     <tr>
       <td>${(r.created_at||'').slice(0,10)}</td>
+      <td><span class="status">${r.status||''}</span></td>
       <td>${r.pojazd||''}</td>
       <td>${r.krypton||''}</td>
       <td>${r.numer_rejestracyjny||''}</td>
       <td>${r.rozpoczecie_pobierajacy||''}</td>
       <td>${r.zakonczenie_zdajacy||''}</td>
-    </tr>`).join('');
+    </tr>`).join('') || `<tr><td colspan="7">Brak kart pojazdów.</td></tr>`;
 }
 
 function updateDocTitle(){
@@ -154,7 +213,8 @@ function updateDocTitle(){
   document.getElementById('docTitle').value=map[type];
 }
 
-async function submitDocument(){
+async function submitDocument(e){
+  e.preventDefault();
   const row = {
     status:'oczekuje',
     typ_dokumentu: val('docType'),
@@ -173,7 +233,10 @@ async function submitDocument(){
   const { error } = await supabaseClient.from('dokumenty').insert(row);
   if(error) return msg('docMsg', error.message, false);
   msg('docMsg','Dokument został przesłany do dowódcy.');
-  loadMyDocuments();
+  document.getElementById('docContent').value = '';
+  document.getElementById('docAttachments').value = '';
+  await loadMyDocuments();
+  if(isCommander()) await loadCommanderDocuments();
 }
 
 async function loadMyDocuments(){
@@ -184,27 +247,42 @@ async function loadMyDocuments(){
     .limit(30);
 
   const box=document.getElementById('myDocsList');
-  if(error){ box.innerHTML=error.message; return; }
-  box.innerHTML=(data||[]).map(docItem).join('') || '<p>Brak dokumentów.</p>';
+  if(error){ box.innerHTML=`<div class="empty">${error.message}</div>`; return; }
+  box.innerHTML=(data||[]).map(docItem).join('') || '<div class="empty">Brak dokumentów.</div>';
+  updateStats();
 }
 
 async function loadCommanderDocuments(){
   const { data, error } = await supabaseClient.from('dokumenty').select('*').order('created_at',{ascending:false}).limit(100);
   const box=document.getElementById('commanderDocsList');
-  if(error){ box.innerHTML=error.message; return; }
-  box.innerHTML=(data||[]).map(d=>docItem(d,true)).join('') || '<p>Brak dokumentów.</p>';
+  if(error){ box.innerHTML=`<div class="empty">${error.message}</div>`; return; }
+  documentCache = data || [];
+  renderCommanderDocuments();
+  updateStats();
+}
+
+function renderCommanderDocuments(){
+  const filter = document.getElementById('docFilter')?.value || '';
+  const docs = filter ? documentCache.filter(d => d.status === filter) : documentCache;
+  const box=document.getElementById('commanderDocsList');
+  box.innerHTML=docs.map(d=>docItem(d,true)).join('') || '<div class="empty">Brak dokumentów.</div>';
 }
 
 function docItem(d, commander=false){
   const opis=d.tresc?.opis || '';
+  const zal=d.tresc?.zalaczniki || '';
   return `<div class="list-item">
     <span class="status ${d.status}">${d.status}</span>
     <h4>${d.tytul || d.typ_dokumentu}</h4>
-    <p><b>Funkcjonariusz:</b> ${d.stopien||''} ${d.funkcjonariusz||''} | <b>Data:</b> ${(d.created_at||'').slice(0,16).replace('T',' ')}</p>
-    <p>${opis.slice(0,220)}${opis.length>220?'...':''}</p>
+    <p><b>Funkcjonariusz:</b> ${d.stopien||''} ${d.funkcjonariusz||''}</p>
+    <p class="small"><b>Data przesłania:</b> ${(d.created_at||'').slice(0,16).replace('T',' ')}</p>
+    <p>${escapeHtml(opis).slice(0,600)}${opis.length>600?'...':''}</p>
+    ${zal ? `<p class="small"><b>Załączniki / uwagi:</b> ${escapeHtml(zal)}</p>` : ''}
     ${commander ? `
-      <button class="secondary" onclick="markDocument(${d.id}, 'sprawdzone')">Oznacz jako sprawdzone</button>
-      <button class="secondary" onclick="markDocument(${d.id}, 'do_poprawy')">Do poprawy</button>
+      <div class="action-row">
+        <button class="btn-light" onclick="markDocument(${d.id}, 'sprawdzone')">Oznacz jako sprawdzone</button>
+        <button class="btn-light" onclick="markDocument(${d.id}, 'do_poprawy')">Do poprawy</button>
+      </div>
     ` : ''}
   </div>`;
 }
@@ -216,7 +294,7 @@ async function markDocument(id, status){
     sprawdzone_at: new Date().toISOString()
   }).eq('id', id);
   if(error) alert(error.message);
-  loadCommanderDocuments();
+  await loadCommanderDocuments();
 }
 
 function downloadCurrentDocumentPDF(){
@@ -233,13 +311,28 @@ function downloadCurrentDocumentPDF(){
 async function loadProfiles(){
   const { data, error } = await supabaseClient.from('profile').select('*').order('created_at',{ascending:false});
   const box=document.getElementById('profilesList');
-  if(error){ box.innerHTML=error.message; return; }
+  if(error){ box.innerHTML=`<div class="empty">${error.message}</div>`; return; }
   box.innerHTML=(data||[]).map(p=>`<div class="list-item">
-    <b>${p.stopien||''} ${p.imie_nazwisko||p.email}</b><br>
-    Email: ${p.email||''}<br>
-    Nr służbowy: ${p.numer_sluzbowy||''}<br>
-    Rola: <b>${p.rola||'funkcjonariusz'}</b>
-  </div>`).join('');
+    <h4>${p.stopien||''} ${p.imie_nazwisko||p.email}</h4>
+    <p>Email: ${p.email||''}</p>
+    <p>Nr służbowy: ${p.numer_sluzbowy||''}</p>
+    <p>Rola: <b>${p.rola||'funkcjonariusz'}</b></p>
+  </div>`).join('') || '<div class="empty">Brak funkcjonariuszy.</div>';
+}
+
+function updateStats(){
+  document.getElementById('statVehicles').textContent = vehicleCache.length || 0;
+  const myDocs = document.querySelectorAll('#myDocsList .list-item').length;
+  document.getElementById('statDocs').textContent = isCommander() ? documentCache.length : myDocs;
+  const pending = documentCache.filter(d => d.status === 'oczekuje').length;
+  const pendingEl = document.getElementById('statPending');
+  if(pendingEl) pendingEl.textContent = pending;
+}
+
+function escapeHtml(str){
+  return String(str || '').replace(/[&<>"']/g, s => ({
+    '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'
+  }[s]));
 }
 
 init();

@@ -11,18 +11,17 @@
 <body>
   <div id="loginView" class="login-screen">
     <div class="login-card">
-      <div class="badge">SWEP</div>
+      <div class="login-mark">SWEP</div>
       <h1>System Wewnętrznej Ewidencji Policji</h1>
       <p>Komenda Miejska Policji w Krakowie</p>
 
       <label>Email</label>
-      <input id="loginEmail" type="email" placeholder="np. funkcjonariusz@kmp.pl" />
+      <input id="loginEmail" type="email" placeholder="email@kmp.pl" autocomplete="email" />
 
       <label>Hasło</label>
-      <input id="loginPassword" type="password" placeholder="Hasło" />
+      <input id="loginPassword" type="password" placeholder="Hasło" autocomplete="current-password" />
 
-      <button onclick="login()">Zaloguj się</button>
-      <button class="secondary" onclick="showRegister()">Utwórz konto testowe</button>
+      <button class="btn-primary" onclick="login()">Zaloguj się</button>
       <div id="loginMsg" class="msg"></div>
     </div>
   </div>
@@ -30,16 +29,23 @@
   <div id="appView" class="app hidden">
     <aside class="sidebar">
       <div class="brand">
-        <strong>SWEP</strong>
-        <span>KMP Kraków</span>
+        <div class="brand-logo">SWEP</div>
+        <div class="brand-sub">KMP Kraków</div>
       </div>
 
-      <button class="nav active" onclick="showPage('dashboard', this)">🏠 Pulpit</button>
-      <button class="nav" onclick="showPage('vehicles', this)">🚔 Karty pojazdów</button>
-      <button class="nav" onclick="showPage('documents', this)">📄 Dokumenty</button>
-      <button class="nav commander-only hidden" onclick="showPage('commanderDocs', this)">👮 Dokumenty dowódcy</button>
-      <button class="nav commander-only hidden" onclick="showPage('users', this)">👥 Funkcjonariusze</button>
-      <button class="nav" onclick="logout()">🚪 Wyloguj</button>
+      <nav>
+        <button class="nav active" onclick="showPage('dashboard', this)">🏠 Pulpit</button>
+        <button class="nav" onclick="showPage('vehicles', this)">🚔 Karty pojazdów</button>
+        <button class="nav" onclick="showPage('documents', this)">📄 Dokumenty</button>
+        <button class="nav commander-only hidden" onclick="showPage('commanderDocs', this)">👮 Dokumenty dowódcy</button>
+        <button class="nav commander-only hidden" onclick="showPage('users', this)">👥 Funkcjonariusze</button>
+        <button class="nav" onclick="logout()">🚪 Wyloguj</button>
+      </nav>
+
+      <div class="sidebar-footer">
+        <span>SWEP v0.2</span>
+        <span>System testowy</span>
+      </div>
     </aside>
 
     <main class="main">
@@ -48,69 +54,137 @@
           <h2 id="pageTitle">Pulpit</h2>
           <span id="userInfo">Ładowanie...</span>
         </div>
-        <div class="role-pill" id="rolePill">rola</div>
+        <div class="top-actions">
+          <span class="role-pill" id="rolePill">rola</span>
+          <button class="btn-light" onclick="refreshCurrentPage()">Odśwież</button>
+        </div>
       </header>
 
       <section id="dashboard" class="page">
+        <div class="hero">
+          <div>
+            <h1>Witaj w SWEP</h1>
+            <p>System kart pojazdów, dokumentów służbowych i panelu dowódcy.</p>
+          </div>
+          <div class="hero-badge">KMP</div>
+        </div>
+
+        <div class="stat-grid">
+          <div class="stat-card">
+            <span>📄</span>
+            <div>
+              <strong id="statDocs">0</strong>
+              <p>Dokumenty</p>
+            </div>
+          </div>
+          <div class="stat-card">
+            <span>🚔</span>
+            <div>
+              <strong id="statVehicles">0</strong>
+              <p>Karty pojazdów</p>
+            </div>
+          </div>
+          <div class="stat-card commander-only hidden">
+            <span>⏳</span>
+            <div>
+              <strong id="statPending">0</strong>
+              <p>Oczekujące</p>
+            </div>
+          </div>
+          <div class="stat-card">
+            <span>👮</span>
+            <div>
+              <strong id="statRole">-</strong>
+              <p>Twoja rola</p>
+            </div>
+          </div>
+        </div>
+
         <div class="cards">
           <div class="card">
             <h3>🚔 Karty pojazdów</h3>
-            <p>Dodawanie pobrania i zdania pojazdu według Twojej tabelki.</p>
+            <p>Dodawanie pobrania i zdania pojazdu według Twojej tabeli.</p>
+            <button onclick="quickPage('vehicles')">Przejdź</button>
           </div>
           <div class="card">
             <h3>📄 Dokumenty</h3>
-            <p>Notatki, wnioski i pokwitowania mogą być przesyłane do dowódcy.</p>
+            <p>Notatki, wnioski i pokwitowania można przesłać do dowódcy.</p>
+            <button onclick="quickPage('documents')">Przejdź</button>
           </div>
           <div class="card commander-only hidden">
             <h3>👮 Panel dowódcy</h3>
-            <p>Widok wszystkich przesłanych dokumentów oraz kart pojazdów.</p>
+            <p>Podgląd dokumentów oczekujących, zatwierdzanie i odsyłanie do poprawy.</p>
+            <button onclick="quickPage('commanderDocs')">Przejdź</button>
           </div>
         </div>
       </section>
 
       <section id="vehicles" class="page hidden">
         <div class="panel">
-          <h3>Nowa karta pojazdu</h3>
-          <div class="grid-3">
-            <input id="v_pojazd" placeholder="Pojazd, np. BMW X5" />
-            <input id="v_krypton" placeholder="Krypton, np. HPG C879" />
-            <input id="v_rej" placeholder="Numer rejestracyjny" />
+          <div class="section-head">
+            <div>
+              <h3>Nowa karta pojazdu</h3>
+              <p>Układ zgodny z tabelą: rozpoczęcie patrolu i zakończenie patrolu.</p>
+            </div>
           </div>
 
-          <h4>Rozpoczęcie patrolu</h4>
-          <div class="grid-4">
-            <input id="r_przebieg" type="number" placeholder="Przebieg" />
-            <input id="r_godzina" type="time" />
-            <input id="r_data" type="date" />
-            <input id="r_pobierajacy" placeholder="Pobierający" />
-            <input id="r_paliwo" type="number" placeholder="% paliwa" />
-            <input id="r_silnik" type="number" placeholder="% silnika" />
-            <input id="r_karoseria" type="number" placeholder="% karoserii" />
-          </div>
+          <form onsubmit="saveVehicleCard(event)">
+            <div class="subpanel">
+              <h4>Karta pojazdu</h4>
+              <div class="grid-3">
+                <input id="v_pojazd" placeholder="Pojazd, np. Scania Tajfun" required />
+                <input id="v_krypton" placeholder="Krypton, np. HPG C879" />
+                <input id="v_rej" placeholder="Numer rejestracyjny" />
+              </div>
+            </div>
 
-          <h4>Zakończenie patrolu</h4>
-          <div class="grid-4">
-            <input id="z_przebieg" type="number" placeholder="Przebieg" />
-            <input id="z_godzina" type="time" />
-            <input id="z_data" type="date" />
-            <input id="z_zdajacy" placeholder="Zdający" />
-            <input id="z_paliwo" type="number" placeholder="% paliwa" />
-            <input id="z_silnik" type="number" placeholder="% silnika" />
-            <input id="z_karoseria" type="number" placeholder="% karoserii" />
-          </div>
+            <div class="patrol-grid">
+              <div class="subpanel green">
+                <h4>Rozpoczęcie patrolu</h4>
+                <div class="grid-2">
+                  <input id="r_przebieg" type="number" placeholder="Przebieg" />
+                  <input id="r_godzina" type="time" />
+                  <input id="r_data" type="date" />
+                  <input id="r_pobierajacy" placeholder="Pobierający" />
+                  <input id="r_paliwo" type="number" placeholder="% paliwa" min="0" max="100" />
+                  <input id="r_silnik" type="number" placeholder="% silnika" min="0" max="100" />
+                  <input id="r_karoseria" type="number" placeholder="% karoserii" min="0" max="100" />
+                </div>
+              </div>
 
-          <button onclick="saveVehicleCard()">Zapisz kartę pojazdu</button>
-          <div id="vehicleMsg" class="msg"></div>
+              <div class="subpanel red">
+                <h4>Zakończenie patrolu</h4>
+                <div class="grid-2">
+                  <input id="z_przebieg" type="number" placeholder="Przebieg" />
+                  <input id="z_godzina" type="time" />
+                  <input id="z_data" type="date" />
+                  <input id="z_zdajacy" placeholder="Zdający" />
+                  <input id="z_paliwo" type="number" placeholder="% paliwa" min="0" max="100" />
+                  <input id="z_silnik" type="number" placeholder="% silnika" min="0" max="100" />
+                  <input id="z_karoseria" type="number" placeholder="% karoserii" min="0" max="100" />
+                </div>
+              </div>
+            </div>
+
+            <button class="btn-primary">Zapisz kartę pojazdu</button>
+            <div id="vehicleMsg" class="msg"></div>
+          </form>
         </div>
 
         <div class="panel">
-          <h3>Historia kart pojazdów</h3>
-          <button class="secondary" onclick="loadVehicleCards()">Odśwież</button>
+          <div class="section-head">
+            <div>
+              <h3>Historia kart pojazdów</h3>
+              <p>Ostatnie 50 wpisów.</p>
+            </div>
+            <input id="vehicleSearch" class="search" placeholder="Szukaj pojazdu, kryptonu, osoby..." oninput="renderVehicleCards()" />
+          </div>
+
           <div class="table-wrap">
             <table>
               <thead>
                 <tr>
-                  <th>Data</th><th>Pojazd</th><th>Krypton</th><th>Rej.</th><th>Pobierający</th><th>Zdający</th>
+                  <th>Data</th><th>Status</th><th>Pojazd</th><th>Krypton</th><th>Rej.</th><th>Pobierający</th><th>Zdający</th>
                 </tr>
               </thead>
               <tbody id="vehicleRows"></tbody>
@@ -121,58 +195,80 @@
 
       <section id="documents" class="page hidden">
         <div class="panel">
-          <h3>Nowy dokument</h3>
-          <div class="grid-2">
-            <select id="docType" onchange="updateDocTitle()">
-              <option value="notatka_sluzbowa">Notatka służbowa</option>
-              <option value="notatka_urzedowa">Notatka urzędowa</option>
-              <option value="bron_palna">Użycie / wykorzystanie broni palnej</option>
-              <option value="paralizator">Użycie / wykorzystanie paralizatora</option>
-              <option value="wniosek_o_ukaranie">Wniosek o ukaranie</option>
-              <option value="zatrzymanie_dokumentu">Pokwitowanie zatrzymania dokumentu</option>
-            </select>
-            <input id="docTitle" placeholder="Tytuł dokumentu" />
+          <div class="section-head">
+            <div>
+              <h3>Nowy dokument</h3>
+              <p>Wypełnij dokument i prześlij go do dowódcy.</p>
+            </div>
           </div>
 
-          <div class="document-paper" id="docPreview">
-            <div class="doc-head">
-              <div><strong>KOMENDA MIEJSKA POLICJI W KRAKOWIE</strong><br>SWEP</div>
-              <div>Kraków, dn. <input id="docDate" type="date"></div>
+          <form onsubmit="submitDocument(event)">
+            <div class="grid-2">
+              <select id="docType" onchange="updateDocTitle()">
+                <option value="notatka_sluzbowa">Notatka służbowa</option>
+                <option value="notatka_urzedowa">Notatka urzędowa</option>
+                <option value="bron_palna">Użycie / wykorzystanie broni palnej</option>
+                <option value="paralizator">Użycie / wykorzystanie paralizatora</option>
+                <option value="wniosek_o_ukaranie">Wniosek o ukaranie</option>
+                <option value="zatrzymanie_dokumentu">Pokwitowanie zatrzymania dokumentu</option>
+              </select>
+              <input id="docTitle" placeholder="Tytuł dokumentu" />
             </div>
 
-            <h2 id="docHeader">NOTATKA SŁUŻBOWA</h2>
+            <div class="document-paper" id="docPreview">
+              <div class="doc-head">
+                <div><strong>KOMENDA MIEJSKA POLICJI W KRAKOWIE</strong><br>System SWEP</div>
+                <div>Kraków, dn. <input id="docDate" type="date"></div>
+              </div>
 
-            <label>Funkcjonariusz</label>
-            <input id="docOfficer" placeholder="Stopień, imię i nazwisko" />
+              <h2 id="docHeader">NOTATKA SŁUŻBOWA</h2>
 
-            <label>Numer służbowy</label>
-            <input id="docBadge" placeholder="Numer służbowy" />
+              <label>Funkcjonariusz</label>
+              <input id="docOfficer" placeholder="Stopień, imię i nazwisko" />
 
-            <label>Treść / opis dokumentu</label>
-            <textarea id="docContent" rows="12" placeholder="Wpisz treść dokumentu..."></textarea>
+              <label>Numer służbowy</label>
+              <input id="docBadge" placeholder="Numer służbowy" />
 
-            <label>Załączniki / uwagi</label>
-            <textarea id="docAttachments" rows="4" placeholder="Opcjonalnie..."></textarea>
+              <label>Treść / opis dokumentu</label>
+              <textarea id="docContent" rows="12" placeholder="Wpisz treść dokumentu..." required></textarea>
 
-            <div class="signature-line">podpis funkcjonariusza</div>
-          </div>
+              <label>Załączniki / uwagi</label>
+              <textarea id="docAttachments" rows="4" placeholder="Opcjonalnie..."></textarea>
 
-          <button onclick="submitDocument()">Prześlij do dowódcy</button>
-          <button class="secondary" onclick="downloadCurrentDocumentPDF()">Pobierz PDF</button>
-          <div id="docMsg" class="msg"></div>
+              <div class="signature-line">podpis funkcjonariusza</div>
+            </div>
+
+            <button class="btn-primary">Prześlij do dowódcy</button>
+            <button type="button" class="btn-light" onclick="downloadCurrentDocumentPDF()">Pobierz PDF</button>
+            <div id="docMsg" class="msg"></div>
+          </form>
         </div>
 
         <div class="panel">
-          <h3>Moje dokumenty</h3>
-          <button class="secondary" onclick="loadMyDocuments()">Odśwież</button>
+          <div class="section-head">
+            <div>
+              <h3>Moje dokumenty</h3>
+              <p>Lista dokumentów przesłanych przez Ciebie.</p>
+            </div>
+          </div>
           <div id="myDocsList" class="list"></div>
         </div>
       </section>
 
       <section id="commanderDocs" class="page hidden">
         <div class="panel">
-          <h3>Dokumenty przesłane do dowódcy</h3>
-          <button class="secondary" onclick="loadCommanderDocuments()">Odśwież</button>
+          <div class="section-head">
+            <div>
+              <h3>Dokumenty przesłane do dowódcy</h3>
+              <p>Możesz oznaczyć jako sprawdzone albo odesłać do poprawy.</p>
+            </div>
+            <select id="docFilter" onchange="renderCommanderDocuments()">
+              <option value="">Wszystkie</option>
+              <option value="oczekuje">Oczekujące</option>
+              <option value="sprawdzone">Sprawdzone</option>
+              <option value="do_poprawy">Do poprawy</option>
+            </select>
+          </div>
           <div id="commanderDocsList" class="list"></div>
         </div>
       </section>
@@ -180,8 +276,7 @@
       <section id="users" class="page hidden">
         <div class="panel">
           <h3>Funkcjonariusze</h3>
-          <p>Na razie role ustawiasz w Supabase w tabeli <b>profile</b>. Żeby ktoś był dowódcą, w kolumnie <b>rola</b> wpisz <b>dowodca</b>.</p>
-          <button class="secondary" onclick="loadProfiles()">Odśwież listę</button>
+          <p>Role ustawiasz w Supabase w tabeli <b>profile</b>. Żeby ktoś był dowódcą, wpisz w kolumnie <b>rola</b>: <b>dowodca</b>.</p>
           <div id="profilesList" class="list"></div>
         </div>
       </section>
