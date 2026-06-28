@@ -71,6 +71,8 @@ async function enterApp(user){
   document.getElementById('userInfo').textContent = `${displayName} | ${profile.email || user.email}`;
   document.getElementById('rolePill').textContent = profile.rola || 'funkcjonariusz';
   document.getElementById('statRole').textContent = profile.rola || 'funkcjonariusz';
+  document.getElementById('profileName').textContent = displayName;
+  document.getElementById('profileDetails').textContent = `Nr służbowy: ${profile.numer_sluzbowy || '-'} | Wydział: ${profile.wydzial || '-'}`;
 
   document.getElementById('docOfficer').value = displayName;
   document.getElementById('docBadge').value = profile.numer_sluzbowy || '';
@@ -114,12 +116,12 @@ function showPage(id, btn){
   if(btn) btn.classList.add('active');
   const titles = {
     dashboard:'Pulpit',
-    vehicles:'Karty pojazdów',
+    vehicles:'Pojazdy',
     documents:'Dokumenty',
-    commanderDocs:'Dokumenty dowódcy',
+    commanderDocs:'Panel dowódcy',
     users:'Funkcjonariusze'
   };
-  document.getElementById('pageTitle').textContent=titles[id]||'SWEP';
+  document.getElementById('pageTitle').textContent=titles[id]||'SWD';
   if(id==='commanderDocs') loadCommanderDocuments();
   if(id==='users') loadProfiles();
 }

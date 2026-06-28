@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>SWEP - System Wewnętrznej Ewidencji Policji</title>
+  <title>SWD - System Wspomagania Dowodzenia</title>
   <link rel="stylesheet" href="css/style.css" />
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
@@ -11,8 +11,8 @@
 <body>
   <div id="loginView" class="login-screen">
     <div class="login-card">
-      <div class="login-mark">SWEP</div>
-      <h1>System Wewnętrznej Ewidencji Policji</h1>
+      <div class="login-mark">SWD</div>
+      <h1>System Wspomagania Dowodzenia</h1>
       <p>Komenda Miejska Policji w Krakowie</p>
 
       <label>Email</label>
@@ -29,21 +29,25 @@
   <div id="appView" class="app hidden">
     <aside class="sidebar">
       <div class="brand">
-        <div class="brand-logo">SWEP</div>
-        <div class="brand-sub">KMP Kraków</div>
+        <div class="brand-logo">SWD</div>
+        <div class="brand-sub">System Wspomagania Dowodzenia</div>
+        <div class="brand-unit">KMP Kraków</div>
       </div>
 
       <nav>
         <button class="nav active" onclick="showPage('dashboard', this)">🏠 Pulpit</button>
-        <button class="nav" onclick="showPage('vehicles', this)">🚔 Karty pojazdów</button>
+        <button class="nav" onclick="showPage('vehicles', this)">🚔 Pojazdy</button>
         <button class="nav" onclick="showPage('documents', this)">📄 Dokumenty</button>
-        <button class="nav commander-only hidden" onclick="showPage('commanderDocs', this)">👮 Dokumenty dowódcy</button>
+        <button class="nav commander-only hidden" onclick="showPage('commanderDocs', this)">👮 Panel dowódcy</button>
         <button class="nav commander-only hidden" onclick="showPage('users', this)">👥 Funkcjonariusze</button>
+        <button class="nav disabled" title="Moduł w przygotowaniu">📅 Służby</button>
+        <button class="nav disabled" title="Moduł w przygotowaniu">📢 Ogłoszenia</button>
+        <button class="nav disabled" title="Moduł w przygotowaniu">📊 Statystyki</button>
         <button class="nav" onclick="logout()">🚪 Wyloguj</button>
       </nav>
 
       <div class="sidebar-footer">
-        <span>SWEP v0.2</span>
+        <span>SWD v1.0</span>
         <span>System testowy</span>
       </div>
     </aside>
@@ -63,10 +67,19 @@
       <section id="dashboard" class="page">
         <div class="hero">
           <div>
-            <h1>Witaj w SWEP</h1>
-            <p>System kart pojazdów, dokumentów służbowych i panelu dowódcy.</p>
+            <h1>SWD - System Wspomagania Dowodzenia</h1>
+            <p>Centrum zarządzania dokumentami, pojazdami i działaniami funkcjonariuszy.</p>
           </div>
           <div class="hero-badge">KMP</div>
+        </div>
+
+        <div class="profile-strip">
+          <div class="avatar">👮</div>
+          <div>
+            <h3 id="profileName">Funkcjonariusz</h3>
+            <p id="profileDetails">Nr służbowy: - | Wydział: -</p>
+          </div>
+          <span class="status-duty">🟢 System aktywny</span>
         </div>
 
         <div class="stat-grid">
@@ -100,21 +113,36 @@
           </div>
         </div>
 
-        <div class="cards">
-          <div class="card">
-            <h3>🚔 Karty pojazdów</h3>
-            <p>Dodawanie pobrania i zdania pojazdu według Twojej tabeli.</p>
-            <button onclick="quickPage('vehicles')">Przejdź</button>
+        <div class="module-grid">
+          <div class="module-card" onclick="quickPage('vehicles')">
+            <div class="module-icon">🚔</div>
+            <h3>Pojazdy</h3>
+            <p>Karty pojazdów, pobrania, zdania i historia patroli.</p>
           </div>
-          <div class="card">
-            <h3>📄 Dokumenty</h3>
-            <p>Notatki, wnioski i pokwitowania można przesłać do dowódcy.</p>
-            <button onclick="quickPage('documents')">Przejdź</button>
+          <div class="module-card" onclick="quickPage('documents')">
+            <div class="module-icon">📄</div>
+            <h3>Dokumenty</h3>
+            <p>Notatki, wnioski, pokwitowania i dokumenty służbowe.</p>
           </div>
-          <div class="card commander-only hidden">
-            <h3>👮 Panel dowódcy</h3>
-            <p>Podgląd dokumentów oczekujących, zatwierdzanie i odsyłanie do poprawy.</p>
-            <button onclick="quickPage('commanderDocs')">Przejdź</button>
+          <div class="module-card commander-only hidden" onclick="quickPage('commanderDocs')">
+            <div class="module-icon">👮</div>
+            <h3>Panel dowódcy</h3>
+            <p>Akceptacja dokumentów i nadzór nad wpisami.</p>
+          </div>
+          <div class="module-card inactive">
+            <div class="module-icon">📅</div>
+            <h3>Służby</h3>
+            <p>Grafik służb i rozliczenie godzin. Moduł w przygotowaniu.</p>
+          </div>
+          <div class="module-card inactive">
+            <div class="module-icon">📢</div>
+            <h3>Ogłoszenia</h3>
+            <p>Komunikaty dowództwa. Moduł w przygotowaniu.</p>
+          </div>
+          <div class="module-card inactive">
+            <div class="module-icon">📊</div>
+            <h3>Statystyki</h3>
+            <p>Aktywność funkcjonariuszy i pojazdów. Moduł w przygotowaniu.</p>
           </div>
         </div>
       </section>
@@ -124,7 +152,7 @@
           <div class="section-head">
             <div>
               <h3>Nowa karta pojazdu</h3>
-              <p>Układ zgodny z tabelą: rozpoczęcie patrolu i zakończenie patrolu.</p>
+              <p>Rozpoczęcie i zakończenie patrolu według tabeli pojazdu.</p>
             </div>
           </div>
 
@@ -217,7 +245,7 @@
 
             <div class="document-paper" id="docPreview">
               <div class="doc-head">
-                <div><strong>KOMENDA MIEJSKA POLICJI W KRAKOWIE</strong><br>System SWEP</div>
+                <div><strong>KOMENDA MIEJSKA POLICJI W KRAKOWIE</strong><br>System SWD</div>
                 <div>Kraków, dn. <input id="docDate" type="date"></div>
               </div>
 
@@ -259,8 +287,8 @@
         <div class="panel">
           <div class="section-head">
             <div>
-              <h3>Dokumenty przesłane do dowódcy</h3>
-              <p>Możesz oznaczyć jako sprawdzone albo odesłać do poprawy.</p>
+              <h3>Panel dowódcy</h3>
+              <p>Dokumenty przesłane do sprawdzenia.</p>
             </div>
             <select id="docFilter" onchange="renderCommanderDocuments()">
               <option value="">Wszystkie</option>
