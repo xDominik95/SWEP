@@ -98,8 +98,35 @@ async function enterApp(user){
   document.getElementById('loginView').classList.add('hidden');
   document.getElementById('appView').classList.remove('hidden');
 
-  let { data: profile } = await supabaseClient.from('profile').select('*').eq('id', user.id).single();
+  // Szukamy profilu najpierw po UUID z Authentication.
+  let { data: profile } = await supabaseClient
+    .from('profile')
+    .select('*')
+    .eq('id', user.id)
+    .maybeSingle();
 
+  // Jeśli nie znajdzie po UUID, szukamy po e-mailu.
+  if(!profile){
+    const byEmail = await supabaseClient
+      .from('profile')
+      .select('*')
+      .eq('email', user.email)
+      .maybeSingle();
+
+    profile = byEmail.data;
+
+    // Jeśli profil znaleziony po e-mailu ma inne UUID, poprawiamy je.
+    if(profile && profile.id !== user.id){
+      await supabaseClient
+        .from('profile')
+        .update({ id: user.id })
+        .eq('email', user.email);
+
+      profile.id = user.id;
+    }
+  }
+
+  // Jeśli nadal nie ma profilu, tworzymy domyślny profil.
   if(!profile){
     const insertProfile = {
       id:user.id,
@@ -109,11 +136,21 @@ async function enterApp(user){
       numer_sluzbowy:'',
       rola:'funkcjonariusz'
     };
-    await supabaseClient.from('profile').insert(insertProfile);
-    profile=insertProfile;
+
+    const { data: createdProfile } = await supabaseClient
+      .from('profile')
+      .insert(insertProfile)
+      .select()
+      .single();
+
+    profile = createdProfile || insertProfile;
   }
 
   currentProfile=profile;
+
+  // Ukryj elementy dowódcze przed ustawieniem uprawnień.
+  document.querySelectorAll('.commander-only').forEach(e=>e.classList.add('hidden'));
+
   const displayName = `${profile.stopien || ''} ${profile.imie_nazwisko || user.email}`.trim();
   document.getElementById('userInfo').textContent = `${displayName} | ${profile.email || user.email}`;
   document.getElementById('rolePill').textContent = profile.rola || 'funkcjonariusz';
@@ -121,10 +158,17 @@ async function enterApp(user){
   document.getElementById('profileName').textContent = displayName;
   document.getElementById('profileDetails').textContent = `Nr służbowy: ${profile.numer_sluzbowy || '-'} | Wydział: ${profile.wydzial || '-'}`;
 
-  document.getElementById('docOfficer').value = displayName;
-  document.getElementById('docBadge').value = profile.numer_sluzbowy || '';
-  document.getElementById('r_pobierajacy').value = profile.imie_nazwisko || '';
-  document.getElementById('z_zdajacy').value = profile.imie_nazwisko || '';
+  const docOfficer = document.getElementById('docOfficer');
+  if(docOfficer) docOfficer.value = displayName;
+
+  const docBadge = document.getElementById('docBadge');
+  if(docBadge) docBadge.value = profile.numer_sluzbowy || '';
+
+  const rPobierajacy = document.getElementById('r_pobierajacy');
+  if(rPobierajacy) rPobierajacy.value = profile.imie_nazwisko || '';
+
+  const zZdajacy = document.getElementById('z_zdajacy');
+  if(zZdajacy) zZdajacy.value = profile.imie_nazwisko || '';
 
   if(isCommander()){
     document.querySelectorAll('.commander-only').forEach(e=>e.classList.remove('hidden'));
@@ -134,7 +178,7 @@ async function enterApp(user){
 }
 
 function isCommander(){
-  return ['admin','dowodca','zastepca','koordynator'].includes(currentProfile?.rola);
+  return ['admin','dowodca','zastepca'].includes(currentProfile?.rola);
 }
 
 async function refreshAll(){
