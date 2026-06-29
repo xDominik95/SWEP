@@ -7,6 +7,50 @@
   <link rel="stylesheet" href="css/style.css" />
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+
+  <style>
+    .vehicle-cards {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 14px;
+      margin-top: 16px;
+    }
+    .vehicle-card {
+      background: #f8fafc;
+      border: 1px solid #dde4ec;
+      border-radius: 16px;
+      padding: 16px;
+    }
+    .vehicle-top {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      align-items: flex-start;
+    }
+    .vehicle-card h4 { margin: 0 0 4px; }
+    .vehicle-info p { margin: 8px 0 4px; }
+    .meter {
+      height: 8px;
+      background: #e2e8f0;
+      border-radius: 99px;
+      overflow: hidden;
+      margin-bottom: 8px;
+    }
+    .meter span {
+      display: block;
+      height: 100%;
+      background: #22c55e;
+    }
+    .checkbox-line {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-top: 12px;
+      font-weight: 700;
+    }
+    .checkbox-line input { width: auto; }
+  </style>
+
 </head>
 <body>
   <div id="loginView" class="login-screen">
@@ -166,7 +210,6 @@
             <input id="pojazdModel" placeholder="Model, np. X5" />
             <input id="pojazdKrypton" placeholder="Kryptonim, np. HPG C879" />
             <input id="pojazdRejestracja" placeholder="Numer rejestracyjny" />
-            <input id="pojazdBoczny" placeholder="Numer boczny" />
             <input id="pojazdPrzebieg" type="number" placeholder="Aktualny przebieg" />
             <input id="pojazdPaliwo" type="number" placeholder="% paliwa" min="0" max="100" />
             <input id="pojazdSilnik" type="number" placeholder="% silnika" min="0" max="100" />
@@ -179,6 +222,8 @@
             <button class="btn-primary" onclick="addPojazd()">Zapisz radiowóz</button>
             <button class="btn-light" onclick="clearPojazdForm()">Wyczyść</button>
           </div>
+
+          <div id="pojazdMsg" class="msg"></div>
         </div>
 
         <div class="panel">
@@ -216,6 +261,7 @@
           <textarea id="pobranieUwagi" rows="3" placeholder="Uwagi przy pobraniu"></textarea>
 
           <button class="btn-primary" onclick="pobierzRadiowoz()">Pobierz radiowóz</button>
+          <div id="pobranieMsg" class="msg"></div>
         </div>
 
         <div class="panel">
@@ -264,6 +310,7 @@
             <button class="btn-primary" onclick="zakonczPatrol()">Zakończ patrol</button>
             <button class="btn-light" onclick="clearZakonczenieForm()">Anuluj</button>
           </div>
+          <div id="zakonczenieMsg" class="msg"></div>
         </div>
 
         <div class="panel">
@@ -417,5 +464,6 @@
 
   <script src="js/config.js"></script>
   <script src="js/app.js"></script>
+  <script src="js/vehicles-module.js"></script>
 </body>
 </html>
