@@ -56,6 +56,34 @@ function vehicleStatusClass(status) {
   return '';
 }
 
+function meterClass(value) {
+  const v = Number(value ?? 0);
+  if (v < 50) return 'meter-danger';
+  if (v < 70) return 'meter-warn';
+  return 'meter-ok';
+}
+
+function vehicleWarnings(p) {
+  const paliwo = Number(p.aktualne_paliwo ?? 100);
+  const silnik = Number(p.aktualny_silnik ?? 100);
+  const karoseria = Number(p.aktualna_karoseria ?? 100);
+
+  return `
+    ${paliwo < 50 ? `
+      <div class="vehicle-warning">⛽ <b>Wymaga tankowania</b></div>
+    ` : ''}
+
+    ${silnik < 50 ? `
+      <div class="vehicle-danger">🔧 <b>Silnik wymaga naprawy</b></div>
+    ` : ''}
+
+    ${karoseria < 50 ? `
+      <div class="vehicle-danger">🛠️ <b>Karoseria wymaga naprawy</b></div>
+    ` : ''}
+  `;
+}
+
+
 async function logSWDActivityVehicles(akcja, opis) {
   try {
     if (!currentProfile) return;
@@ -121,11 +149,12 @@ function renderPojazdyLista() {
       <div class="vehicle-info">
         <p><b>Przebieg:</b> ${p.aktualny_przebieg || 0} km</p>
         <p><b>Paliwo:</b> ${p.aktualne_paliwo ?? 0}%</p>
-        <div class="meter"><span style="width:${p.aktualne_paliwo ?? 0}%"></span></div>
+        <div class="meter"><span class="${meterClass(p.aktualne_paliwo)}" style="width:${p.aktualne_paliwo ?? 0}%"></span></div>
         <p><b>Silnik:</b> ${p.aktualny_silnik ?? 0}%</p>
-        <div class="meter"><span style="width:${p.aktualny_silnik ?? 0}%"></span></div>
+        <div class="meter"><span class="${meterClass(p.aktualny_silnik)}" style="width:${p.aktualny_silnik ?? 0}%"></span></div>
         <p><b>Karoseria:</b> ${p.aktualna_karoseria ?? 0}%</p>
-        <div class="meter"><span style="width:${p.aktualna_karoseria ?? 0}%"></span></div>
+        <div class="meter"><span class="${meterClass(p.aktualna_karoseria)}" style="width:${p.aktualna_karoseria ?? 0}%"></span></div>
+        ${vehicleWarnings(p)}
       </div>
 
       ${isDowodcaOrAdminVehicles() ? `
