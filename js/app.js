@@ -33,15 +33,62 @@ function setDefaultDates(){
   });
 }
 
+async function resolveLoginToEmail(login){
+  if(login.includes('@')) return login;
+  const normalized = login.trim().toLowerCase();
+  const { data } = await supabaseClient.from('profile').select('email, imie_nazwisko').limit(500);
+  const found = (data || []).find(p =>
+    String(p.imie_nazwisko || '').toLowerCase().replaceAll(' ', '-') === normalized ||
+    String(p.imie_nazwisko || '').toLowerCase() === normalized
+  );
+  return found?.email || login;
+}
+
+async function logActivity(akcja, opis){
+  if(!currentProfile) return;
+  await supabaseClient.from('aktywnosc').insert({
+    uzytkownik: currentProfile.imie_nazwisko || currentProfile.email,
+    rola: currentProfile.rola,
+    akcja,
+    opis
+  });
+}
+
+async function logHistory(tabela, rekord_id, akcja, opis, dane_przed=null, dane_po=null){
+  if(!currentProfile) return;
+  await supabaseClient.from('historia_zmian').insert({
+    tabela,
+    rekord_id,
+    akcja,
+    opis,
+    uzytkownik: currentProfile.imie_nazwisko || currentProfile.email,
+    rola: currentProfile.rola,
+    dane_przed,
+    dane_po
+  });
+}
+
+async function generateDocumentNumber(type){
+  const { data, error } = await supabaseClient.from('numeracja_dokumentow').select('*').eq('typ', type).single();
+  if(error || !data) return `${type.toUpperCase()}/${new Date().getFullYear()}/${Date.now()}`;
+  const year = new Date().getFullYear();
+  const next = data.rok !== year ? 1 : (data.ostatni_numer || 0) + 1;
+  await supabaseClient.from('numeracja_dokumentow').update({ ostatni_numer: next, rok: year }).eq('typ', type);
+  return `${data.prefix}/${year}/${String(next).padStart(5,'0')}`;
+}
+
 async function login(){
-  const email=document.getElementById('loginEmail').value.trim();
+  const rawLogin=document.getElementById('loginEmail').value.trim();
+  const email=await resolveLoginToEmail(rawLogin);
   const password=document.getElementById('loginPassword').value;
   const { data, error } = await supabaseClient.auth.signInWithPassword({email,password});
   if(error) return msg('loginMsg', error.message, false);
   await enterApp(data.user);
+  await logActivity('logowanie','Użytkownik zalogował się do systemu');
 }
 
 async function logout(){
+  await logActivity('wylogowanie','Użytkownik wylogował się z systemu');
   await supabaseClient.auth.signOut();
   location.reload();
 }
@@ -87,7 +134,7 @@ async function enterApp(user){
 }
 
 function isCommander(){
-  return ['admin','dowodca'].includes(currentProfile?.rola);
+  return ['admin','dowodca','zastepca','koordynator'].includes(currentProfile?.rola);
 }
 
 async function refreshAll(){
@@ -106,6 +153,10 @@ function refreshCurrentPage(){
   else if(activePage === 'documents') loadMyDocuments();
   else if(activePage === 'commanderDocs') loadCommanderDocuments();
   else if(activePage === 'users') loadProfiles();
+  else if(activePage === 'activity') loadActivity();
+  else if(activePage === 'trash') loadTrash();
+  else if(activePage === 'archive') loadArchive();
+  else if(activePage === 'settings') loadSettings();
   else refreshAll();
 }
 
@@ -119,11 +170,15 @@ function showPage(id, btn){
     vehicles:'Pojazdy',
     documents:'Dokumenty',
     commanderDocs:'Panel dowódcy',
-    users:'Funkcjonariusze'
+    users:'Funkcjonariusze', activity:'Aktywność', trash:'Kosz', archive:'Archiwum', settings:'Ustawienia'
   };
   document.getElementById('pageTitle').textContent=titles[id]||'SWD';
   if(id==='commanderDocs') loadCommanderDocuments();
   if(id==='users') loadProfiles();
+  if(id==='activity') loadActivity();
+  if(id==='trash') loadTrash();
+  if(id==='archive') loadArchive();
+  if(id==='settings') loadSettings();
 }
 
 function quickPage(id){
@@ -217,10 +272,13 @@ function updateDocTitle(){
 
 async function submitDocument(e){
   e.preventDefault();
+  const type = val('docType');
+  const number = await generateDocumentNumber(type);
   const row = {
     status:'oczekuje',
-    typ_dokumentu: val('docType'),
+    typ_dokumentu: type,
     tytul: val('docTitle'),
+    numer_dokumentu: number,
     funkcjonariusz: currentProfile?.imie_nazwisko || currentUser.email,
     stopien: currentProfile?.stopien || '',
     numer_sluzbowy: currentProfile?.numer_sluzbowy || '',
@@ -232,9 +290,11 @@ async function submitDocument(e){
       zalaczniki: val('docAttachments')
     }
   };
-  const { error } = await supabaseClient.from('dokumenty').insert(row);
+  const { data, error } = await supabaseClient.from('dokumenty').insert(row).select().single();
   if(error) return msg('docMsg', error.message, false);
-  msg('docMsg','Dokument został przesłany do dowódcy.');
+  await logActivity('dokument','Przesłano dokument '+number);
+  await logHistory('dokumenty', data?.id, 'dodano', 'Utworzono dokument '+number, null, row);
+  msg('docMsg','Dokument został przesłany do dowódcy. Numer: '+number);
   document.getElementById('docContent').value = '';
   document.getElementById('docAttachments').value = '';
   await loadMyDocuments();
@@ -244,6 +304,7 @@ async function submitDocument(e){
 async function loadMyDocuments(){
   const { data, error } = await supabaseClient.from('dokumenty')
     .select('*')
+    .is('deleted_at', null)
     .eq('funkcjonariusz', currentProfile?.imie_nazwisko || currentUser?.email)
     .order('created_at',{ascending:false})
     .limit(30);
@@ -255,7 +316,7 @@ async function loadMyDocuments(){
 }
 
 async function loadCommanderDocuments(){
-  const { data, error } = await supabaseClient.from('dokumenty').select('*').order('created_at',{ascending:false}).limit(100);
+  const { data, error } = await supabaseClient.from('dokumenty').select('*').is('deleted_at', null).order('created_at',{ascending:false}).limit(100);
   const box=document.getElementById('commanderDocsList');
   if(error){ box.innerHTML=`<div class="empty">${error.message}</div>`; return; }
   documentCache = data || [];
@@ -275,28 +336,57 @@ function docItem(d, commander=false){
   const zal=d.tresc?.zalaczniki || '';
   return `<div class="list-item">
     <span class="status ${d.status}">${d.status}</span>
-    <h4>${d.tytul || d.typ_dokumentu}</h4>
+    <h4>${d.numer_dokumentu ? d.numer_dokumentu + ' — ' : ''}${d.tytul || d.typ_dokumentu}</h4>
     <p><b>Funkcjonariusz:</b> ${d.stopien||''} ${d.funkcjonariusz||''}</p>
     <p class="small"><b>Data przesłania:</b> ${(d.created_at||'').slice(0,16).replace('T',' ')}</p>
+    ${d.podpis_elektroniczny ? `<p><b>Podpis elektroniczny:</b> ${escapeHtml(d.podpis_elektroniczny)}</p>` : ''}
     <p>${escapeHtml(opis).slice(0,600)}${opis.length>600?'...':''}</p>
     ${zal ? `<p class="small"><b>Załączniki / uwagi:</b> ${escapeHtml(zal)}</p>` : ''}
     ${commander ? `
       <div class="action-row">
-        <button class="btn-light" onclick="markDocument(${d.id}, 'sprawdzone')">Oznacz jako sprawdzone</button>
+        <button class="btn-light" onclick="markDocument(${d.id}, 'sprawdzone')">Zatwierdź / podpisz</button>
         <button class="btn-light" onclick="markDocument(${d.id}, 'do_poprawy')">Do poprawy</button>
+        <button class="btn-light" onclick="softDeleteDocument(${d.id})">Do kosza</button>
       </div>
     ` : ''}
   </div>`;
 }
 
 async function markDocument(id, status){
-  const { error } = await supabaseClient.from('dokumenty').update({
+  const podpis = status === 'sprawdzone'
+    ? `Zatwierdzono elektronicznie przez ${currentProfile?.stopien || ''} ${currentProfile?.imie_nazwisko || currentUser.email} dnia ${new Date().toLocaleString('pl-PL')}`
+    : null;
+  const patch = {
     status,
     sprawdzone_przez: currentProfile?.imie_nazwisko || currentUser.email,
     sprawdzone_at: new Date().toISOString()
-  }).eq('id', id);
+  };
+  if(podpis){
+    patch.zatwierdzone_przez = patch.sprawdzone_przez;
+    patch.zatwierdzone_at = patch.sprawdzone_at;
+    patch.podpis_elektroniczny = podpis;
+  }
+  const { error } = await supabaseClient.from('dokumenty').update(patch).eq('id', id);
   if(error) alert(error.message);
+  await logActivity('dokument','Zmieniono status dokumentu na '+status);
+  await logHistory('dokumenty', id, 'status', 'Zmieniono status dokumentu na '+status, null, patch);
   await loadCommanderDocuments();
+}
+
+async function softDeleteDocument(id){
+  if(!confirm('Przenieść dokument do kosza?')) return;
+  const patch = { deleted_at: new Date().toISOString(), deleted_by: currentProfile?.imie_nazwisko || currentUser.email, status:'usuniety' };
+  const { error } = await supabaseClient.from('dokumenty').update(patch).eq('id', id);
+  if(error) return alert(error.message);
+  await logActivity('dokument','Przeniesiono dokument do kosza');
+  await loadCommanderDocuments();
+}
+
+async function restoreDocument(id){
+  const { error } = await supabaseClient.from('dokumenty').update({deleted_at:null, deleted_by:null, status:'oczekuje'}).eq('id', id);
+  if(error) return alert(error.message);
+  await logActivity('dokument','Przywrócono dokument z kosza');
+  await loadTrash();
 }
 
 function downloadCurrentDocumentPDF(){
@@ -335,6 +425,37 @@ function escapeHtml(str){
   return String(str || '').replace(/[&<>"']/g, s => ({
     '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'
   }[s]));
+}
+
+async function loadActivity(){
+  const { data, error } = await supabaseClient.from('aktywnosc').select('*').order('created_at',{ascending:false}).limit(100);
+  const box=document.getElementById('activityList');
+  if(!box) return;
+  if(error){ box.innerHTML=error.message; return; }
+  box.innerHTML=(data||[]).map(a=>`<div class="list-item"><h4>${a.akcja||''}</h4><p>${a.opis||''}</p><p class="small">${a.uzytkownik||''} | ${a.rola||''} | ${(a.created_at||'').slice(0,16).replace('T',' ')}</p></div>`).join('') || '<div class="empty">Brak aktywności.</div>';
+}
+
+async function loadTrash(){
+  const { data, error } = await supabaseClient.from('dokumenty').select('*').not('deleted_at','is',null).order('deleted_at',{ascending:false}).limit(100);
+  const box=document.getElementById('trashList');
+  if(!box) return;
+  if(error){ box.innerHTML=error.message; return; }
+  box.innerHTML=(data||[]).map(d=>`<div class="list-item"><span class="status usuniety">kosz</span><h4>${d.numer_dokumentu||''} ${d.tytul||''}</h4><p>Usunięto: ${(d.deleted_at||'').slice(0,16).replace('T',' ')} przez ${d.deleted_by||''}</p><button class="btn-light" onclick="restoreDocument(${d.id})">Przywróć</button></div>`).join('') || '<div class="empty">Kosz pusty.</div>';
+}
+
+async function loadArchive(){
+  const { data, error } = await supabaseClient.from('dokumenty').select('*').is('deleted_at', null).order('created_at',{ascending:false}).limit(300);
+  const box=document.getElementById('archiveList');
+  if(!box) return;
+  if(error){ box.innerHTML=error.message; return; }
+  const q=(document.getElementById('archiveSearch')?.value||'').toLowerCase();
+  box.innerHTML=(data||[]).filter(d=>`${d.numer_dokumentu||''} ${d.tytul||''} ${d.funkcjonariusz||''} ${d.status||''}`.toLowerCase().includes(q)).map(d=>docItem(d,false)).join('') || '<div class="empty">Brak wyników.</div>';
+}
+
+async function loadSettings(){
+  const { data } = await supabaseClient.from('numeracja_dokumentow').select('*').order('typ');
+  const box=document.getElementById('numberingSettings');
+  if(box) box.innerHTML=(data||[]).map(n=>`<div class="list-item"><h4>${n.typ}</h4><p>Prefix: <b>${n.prefix}</b> | Rok: ${n.rok} | Ostatni numer: ${n.ostatni_numer}</p></div>`).join('');
 }
 
 init();

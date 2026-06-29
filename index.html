@@ -15,8 +15,8 @@
       <h1>System Wspomagania Dowodzenia</h1>
       <p>Komenda Miejska Policji w Krakowie</p>
 
-      <label>Email</label>
-      <input id="loginEmail" type="email" placeholder="email@kmp.pl" autocomplete="email" />
+      <label>Login / Email</label>
+      <input id="loginEmail" type="text" placeholder="np. jan-kowalski albo email" autocomplete="username" />
 
       <label>Hasło</label>
       <input id="loginPassword" type="password" placeholder="Hasło" autocomplete="current-password" />
@@ -39,6 +39,10 @@
         <button class="nav" onclick="showPage('vehicles', this)">🚔 Pojazdy</button>
         <button class="nav" onclick="showPage('documents', this)">📄 Dokumenty</button>
         <button class="nav commander-only hidden" onclick="showPage('commanderDocs', this)">👮 Panel dowódcy</button>
+        <button class="nav commander-only hidden" onclick="showPage('archive', this)">📁 Archiwum</button>
+        <button class="nav commander-only hidden" onclick="showPage('activity', this)">🕘 Aktywność</button>
+        <button class="nav commander-only hidden" onclick="showPage('trash', this)">🗑️ Kosz</button>
+        <button class="nav commander-only hidden" onclick="showPage('settings', this)">⚙️ Ustawienia</button>
         <button class="nav commander-only hidden" onclick="showPage('users', this)">👥 Funkcjonariusze</button>
         <button class="nav disabled" title="Moduł w przygotowaniu">📅 Służby</button>
         <button class="nav disabled" title="Moduł w przygotowaniu">📢 Ogłoszenia</button>
@@ -298,6 +302,37 @@
             </select>
           </div>
           <div id="commanderDocsList" class="list"></div>
+        </div>
+      </section>
+
+
+      <section id="archive" class="page hidden">
+        <div class="panel">
+          <div class="section-head"><div><h3>Archiwum dokumentów</h3><p>Szybkie wyszukiwanie po numerze, funkcjonariuszu i statusie.</p></div></div>
+          <input id="archiveSearch" class="search" placeholder="Szukaj..." oninput="loadArchive()" />
+          <div id="archiveList" class="list"></div>
+        </div>
+      </section>
+
+      <section id="activity" class="page hidden">
+        <div class="panel">
+          <h3>Panel aktywności</h3>
+          <div id="activityList" class="list"></div>
+        </div>
+      </section>
+
+      <section id="trash" class="page hidden">
+        <div class="panel">
+          <h3>Kosz dokumentów</h3>
+          <div id="trashList" class="list"></div>
+        </div>
+      </section>
+
+      <section id="settings" class="page hidden">
+        <div class="panel">
+          <h3>Centralny panel ustawień</h3>
+          <h4>Numeracja dokumentów</h4>
+          <div id="numberingSettings" class="list"></div>
         </div>
       </section>
 
