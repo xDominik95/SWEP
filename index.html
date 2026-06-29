@@ -150,76 +150,145 @@
           </div>
         </div>
       </section>
-
       <section id="vehicles" class="page hidden">
-        <div class="panel">
+        <div class="panel commander-only">
           <div class="section-head">
             <div>
-              <h3>Nowa karta pojazdu</h3>
-              <p>Rozpoczęcie i zakończenie patrolu według tabeli pojazdu.</p>
+              <h3 id="pojazdFormTitle">Dodaj radiowóz</h3>
+              <p>Radiowozy dodaje dowódca lub administrator. Funkcjonariusz wybiera pojazd z listy podczas pobrania.</p>
             </div>
           </div>
 
-          <form onsubmit="saveVehicleCard(event)">
-            <div class="subpanel">
-              <h4>Karta pojazdu</h4>
-              <div class="grid-3">
-                <input id="v_pojazd" placeholder="Pojazd, np. Scania Tajfun" required />
-                <input id="v_krypton" placeholder="Krypton, np. HPG C879" />
-                <input id="v_rej" placeholder="Numer rejestracyjny" />
-              </div>
+          <input type="hidden" id="pojazdEditingId" />
+
+          <div class="grid-4">
+            <input id="pojazdMarka" placeholder="Marka, np. BMW" />
+            <input id="pojazdModel" placeholder="Model, np. X5" />
+            <input id="pojazdKrypton" placeholder="Kryptonim, np. HPG C879" />
+            <input id="pojazdRejestracja" placeholder="Numer rejestracyjny" />
+            <input id="pojazdBoczny" placeholder="Numer boczny" />
+            <input id="pojazdPrzebieg" type="number" placeholder="Aktualny przebieg" />
+            <input id="pojazdPaliwo" type="number" placeholder="% paliwa" min="0" max="100" />
+            <input id="pojazdSilnik" type="number" placeholder="% silnika" min="0" max="100" />
+            <input id="pojazdKaroseria" type="number" placeholder="% karoserii" min="0" max="100" />
+          </div>
+
+          <textarea id="pojazdUwagi" rows="3" placeholder="Uwagi do pojazdu"></textarea>
+
+          <div class="action-row">
+            <button class="btn-primary" onclick="addPojazd()">Zapisz radiowóz</button>
+            <button class="btn-light" onclick="clearPojazdForm()">Wyczyść</button>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="section-head">
+            <div>
+              <h3>Lista radiowozów</h3>
+              <p>Status radiowozu zmienia się automatycznie po pobraniu i zakończeniu patrolu.</p>
             </div>
+            <button class="btn-light" onclick="loadPojazdySystem()">Odśwież</button>
+          </div>
 
-            <div class="patrol-grid">
-              <div class="subpanel green">
-                <h4>Rozpoczęcie patrolu</h4>
-                <div class="grid-2">
-                  <input id="r_przebieg" type="number" placeholder="Przebieg" />
-                  <input id="r_godzina" type="time" />
-                  <input id="r_data" type="date" />
-                  <input id="r_pobierajacy" placeholder="Pobierający" />
-                  <input id="r_paliwo" type="number" placeholder="% paliwa" min="0" max="100" />
-                  <input id="r_silnik" type="number" placeholder="% silnika" min="0" max="100" />
-                  <input id="r_karoseria" type="number" placeholder="% karoserii" min="0" max="100" />
-                </div>
-              </div>
+          <div id="pojazdyLista" class="vehicle-cards"></div>
+        </div>
 
-              <div class="subpanel red">
-                <h4>Zakończenie patrolu</h4>
-                <div class="grid-2">
-                  <input id="z_przebieg" type="number" placeholder="Przebieg" />
-                  <input id="z_godzina" type="time" />
-                  <input id="z_data" type="date" />
-                  <input id="z_zdajacy" placeholder="Zdający" />
-                  <input id="z_paliwo" type="number" placeholder="% paliwa" min="0" max="100" />
-                  <input id="z_silnik" type="number" placeholder="% silnika" min="0" max="100" />
-                  <input id="z_karoseria" type="number" placeholder="% karoserii" min="0" max="100" />
-                </div>
-              </div>
+        <div class="panel">
+          <div class="section-head">
+            <div>
+              <h3>Pobranie radiowozu</h3>
+              <p>Funkcjonariusz wybiera dostępny radiowóz i wpisuje dane z momentu pobrania.</p>
             </div>
+          </div>
 
-            <button class="btn-primary">Zapisz kartę pojazdu</button>
-            <div id="vehicleMsg" class="msg"></div>
-          </form>
+          <label>Wybierz radiowóz</label>
+          <select id="pobraniePojazdSelect"></select>
+
+          <div class="grid-4">
+            <input id="pobraniePrzebieg" type="number" placeholder="Przebieg przy pobraniu" />
+            <input id="pobranieGodzina" type="time" />
+            <input id="pobranieData" type="date" />
+            <input id="pobraniePaliwo" type="number" placeholder="% paliwa" min="0" max="100" />
+            <input id="pobranieSilnik" type="number" placeholder="% silnika" min="0" max="100" />
+            <input id="pobranieKaroseria" type="number" placeholder="% karoserii" min="0" max="100" />
+          </div>
+
+          <textarea id="pobranieUwagi" rows="3" placeholder="Uwagi przy pobraniu"></textarea>
+
+          <button class="btn-primary" onclick="pobierzRadiowoz()">Pobierz radiowóz</button>
+        </div>
+
+        <div class="panel">
+          <div class="section-head">
+            <div>
+              <h3>Aktywne patrole</h3>
+              <p>Tutaj widać radiowozy, które są aktualnie pobrane.</p>
+            </div>
+          </div>
+
+          <div id="aktywneKartyPojazdow" class="list"></div>
+        </div>
+
+        <div id="zakonczeniePanel" class="panel hidden">
+          <div class="section-head">
+            <div>
+              <h3>Zakończenie patrolu</h3>
+              <p>Uzupełnij dane po zakończeniu patrolu.</p>
+            </div>
+          </div>
+
+          <input type="hidden" id="zakonczenieKartaId" />
+
+          <label>Radiowóz</label>
+          <input id="zakonczeniePojazdInfo" disabled />
+
+          <div class="grid-4">
+            <input id="zakonczeniePrzebieg" type="number" placeholder="Przebieg po patrolu" />
+            <input id="zakonczenieGodzina" type="time" />
+            <input id="zakonczenieData" type="date" />
+            <input id="zakonczeniePaliwo" type="number" placeholder="% paliwa" min="0" max="100" />
+            <input id="zakonczenieSilnik" type="number" placeholder="% silnika" min="0" max="100" />
+            <input id="zakonczenieKaroseria" type="number" placeholder="% karoserii" min="0" max="100" />
+          </div>
+
+          <textarea id="zakonczenieUwagi" rows="3" placeholder="Uwagi po patrolu"></textarea>
+
+          <label class="checkbox-line">
+            <input type="checkbox" id="zakonczenieUszkodzenia" />
+            Pojazd posiada uszkodzenia / wymaga wyjaśnienia
+          </label>
+
+          <textarea id="zakonczenieUwagiUszkodzenia" rows="3" placeholder="Opis uszkodzeń"></textarea>
+
+          <div class="action-row">
+            <button class="btn-primary" onclick="zakonczPatrol()">Zakończ patrol</button>
+            <button class="btn-light" onclick="clearZakonczenieForm()">Anuluj</button>
+          </div>
         </div>
 
         <div class="panel">
           <div class="section-head">
             <div>
               <h3>Historia kart pojazdów</h3>
-              <p>Ostatnie 50 wpisów.</p>
+              <p>Historia pobrań i zdań radiowozów.</p>
             </div>
-            <input id="vehicleSearch" class="search" placeholder="Szukaj pojazdu, kryptonu, osoby..." oninput="renderVehicleCards()" />
           </div>
 
           <div class="table-wrap">
             <table>
               <thead>
                 <tr>
-                  <th>Data</th><th>Status</th><th>Pojazd</th><th>Krypton</th><th>Rej.</th><th>Pobierający</th><th>Zdający</th>
+                  <th>Data</th>
+                  <th>Status</th>
+                  <th>Pojazd</th>
+                  <th>Krypton</th>
+                  <th>Rejestracja</th>
+                  <th>Pobrał</th>
+                  <th>Zdał</th>
+                  <th>Przebieg</th>
                 </tr>
               </thead>
-              <tbody id="vehicleRows"></tbody>
+              <tbody id="historiaKartPojazdow"></tbody>
             </table>
           </div>
         </div>
