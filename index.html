@@ -50,109 +50,113 @@
     }
     .checkbox-line input { width: auto; }
   
-    .doc-type-grid{
+    .doc2-type-grid{
       display:grid;
-      grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
+      grid-template-columns:repeat(auto-fit,minmax(190px,1fr));
       gap:12px;
-      margin:14px 0;
+      margin:14px 0 18px;
     }
-    .doc-type-card{
+    .doc2-type{
       border:1px solid #dbe3ee;
-      background:#f8fafc;
       border-radius:14px;
+      background:#f8fafc;
       padding:14px;
+      text-align:left;
+      margin:0;
       cursor:pointer;
-      transition:.15s;
+      color:#0f172a;
     }
-    .doc-type-card:hover,.doc-type-card.active{
+    .doc2-type b{
+      display:block;
+      color:#0b2b4d;
+      font-size:18px;
+      margin-bottom:4px;
+    }
+    .doc2-type span{font-weight:700}
+    .doc2-type.active{
+      background:#fff;
       border-color:#0b2b4d;
       box-shadow:0 4px 14px rgba(15,23,42,.12);
-      background:#fff;
     }
-    .doc-type-card strong{display:block;margin-bottom:4px;color:#0b2b4d}
-    .doc-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}
-    .doc-grid-3{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
-    .doc-field{margin-top:12px}
-    .doc-label{font-weight:800;font-size:13px;margin-bottom:5px;display:block}
-    .doc-paper{
+    .doc2-paper{
       background:#fff;
       border:1px solid #cfd6df;
       border-radius:10px;
-      padding:26px;
+      padding:28px;
       margin-top:16px;
+      color:#000;
     }
-    .doc-paper-header{
+    .doc2-paper-head{
       display:flex;
       justify-content:space-between;
       gap:20px;
       font-size:13px;
-      margin-bottom:22px;
+      margin-bottom:20px;
     }
-    .doc-paper h2{
+    .doc2-paper h2{
       text-align:center;
       text-transform:uppercase;
-      margin:16px 0 24px;
-      font-family:'Times New Roman',serif;
+      font-family:"Times New Roman",serif;
+      margin:18px 0 24px;
       letter-spacing:.5px;
     }
-    .doc-signature{
-      margin-top:34px;
-      padding-top:20px;
+    .doc2-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}
+    .doc2-grid-3{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+    .doc2-field{margin-top:12px}
+    .doc2-field label{
+      display:block;
+      font-weight:800;
+      font-size:13px;
+      margin-bottom:5px;
+    }
+    .doc2-field input,.doc2-field textarea,.doc2-field select{
+      width:100%;
+      padding:10px;
+      border:1px solid #cbd5e1;
+      border-radius:8px;
+    }
+    .doc2-sign{
+      margin-top:45px;
       text-align:right;
       font-size:13px;
     }
-    .doc-signature:before{
+    .doc2-sign:before{
       content:"";
       display:block;
-      border-top:1px dotted #000;
       width:260px;
+      border-top:1px dotted #000;
       margin-left:auto;
       margin-bottom:6px;
     }
-    .doc-toolbar{
-      display:flex;
-      flex-wrap:wrap;
-      gap:10px;
-      margin-top:14px;
-    }
-    .doc-view{
-      border:1px solid #dde4ec;
-      border-radius:14px;
-      padding:18px;
-      background:#fff;
-      margin-top:10px;
-    }
-    .doc-view-row{
+    .doc2-view-row{
       display:grid;
-      grid-template-columns:220px 1fr;
+      grid-template-columns:210px 1fr;
       gap:10px;
       border-bottom:1px solid #eef2f7;
-      padding:8px 0;
+      padding:7px 0;
     }
-    .doc-view-row b{color:#0b2b4d}
-    .comment-box{
-      background:#f8fafc;
-      border-left:4px solid #0b2b4d;
-      padding:10px;
-      border-radius:8px;
-      margin-top:10px;
-    }
-    .status.odrzucone{background:#111827;color:#fff}
-    .status.szkic{background:#e5e7eb;color:#374151}
-    .perm-grid{
-      display:grid;
-      grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
-      gap:10px;
+    .doc2-view-row b{color:#0b2b4d}
+    .vehicle-detail-box{
+      background:#ffffff;
+      border:1px solid #dbe3ee;
+      border-radius:14px;
+      padding:14px;
       margin-top:12px;
     }
-    .perm-item{
-      background:#f8fafc;
-      border:1px solid #e2e8f0;
-      border-radius:12px;
-      padding:12px;
-      font-weight:700;
+    .vehicle-detail-box h5{
+      margin:0 0 8px;
+      color:#0b2b4d;
+      font-size:15px;
     }
-    .perm-item input{width:auto;margin-right:8px}
+    .vehicle-detail-grid{
+      display:grid;
+      grid-template-columns:repeat(2,1fr);
+      gap:8px;
+      font-size:14px;
+    }
+    @media(max-width:900px){
+      .doc2-grid,.doc2-grid-3,.doc2-paper-head,.doc2-view-row,.vehicle-detail-grid{display:block}
+    }
 
   </style>
 
@@ -449,109 +453,82 @@
         <div class="panel">
           <div class="section-head">
             <div>
-              <h3>Nowy dokument</h3>
-              <p>Wybierz typ dokumentu. System nada numer automatycznie po wysłaniu do dowódcy.</p>
+              <h3>Dokumenty 2.0</h3>
+              <p>Tworzenie dokumentów bez zatwierdzania dowódcy. Dokument zapisuje się od razu w systemie i dostaje numer.</p>
             </div>
           </div>
 
-          <div class="doc-type-grid" id="docTypeGrid">
-            <div class="doc-type-card active" onclick="selectDocumentType('notatka_sluzbowa')">
-              <strong>NS</strong>
-              Notatka służbowa
-            </div>
-            <div class="doc-type-card" onclick="selectDocumentType('notatka_urzedowa')">
-              <strong>NU</strong>
-              Notatka urzędowa
-            </div>
-            <div class="doc-type-card" onclick="selectDocumentType('bron_palna')">
-              <strong>UBP</strong>
-              Użycie / wykorzystanie broni palnej
-            </div>
-            <div class="doc-type-card" onclick="selectDocumentType('paralizator')">
-              <strong>UP</strong>
-              Użycie / wykorzystanie paralizatora
-            </div>
-            <div class="doc-type-card" onclick="selectDocumentType('wniosek_o_ukaranie')">
-              <strong>WU</strong>
-              Wniosek o ukaranie
-            </div>
-            <div class="doc-type-card" onclick="selectDocumentType('zatrzymanie_dokumentu')">
-              <strong>PZD</strong>
-              Pokwitowanie zatrzymania dokumentu
-            </div>
+          <div class="doc2-type-grid">
+            <button class="doc2-type active" onclick="doc2SelectType('notatka_sluzbowa')">
+              <b>NS</b><span>Notatka służbowa</span>
+            </button>
+            <button class="doc2-type" onclick="doc2SelectType('notatka_urzedowa')">
+              <b>NU</b><span>Notatka urzędowa</span>
+            </button>
+            <button class="doc2-type" onclick="doc2SelectType('wniosek_o_ukaranie')">
+              <b>WU</b><span>Wniosek o ukaranie</span>
+            </button>
+            <button class="doc2-type" onclick="doc2SelectType('zatrzymanie_dokumentu')">
+              <b>PZD</b><span>Pokwitowanie zatrzymania dokumentu</span>
+            </button>
+            <button class="doc2-type" onclick="doc2SelectType('bron_palna')">
+              <b>UBP</b><span>Użycie broni palnej</span>
+            </button>
+            <button class="doc2-type" onclick="doc2SelectType('paralizator')">
+              <b>UP</b><span>Użycie paralizatora</span>
+            </button>
           </div>
 
-          <input type="hidden" id="docType" value="notatka_sluzbowa" />
-          <input type="hidden" id="editingDocumentId" />
+          <input type="hidden" id="doc2Type" value="notatka_sluzbowa" />
+          <input type="hidden" id="doc2EditingId" />
 
-          <div id="documentFormHost"></div>
+          <div id="doc2FormHost"></div>
 
-          <div class="doc-toolbar">
-            <button class="btn-primary" onclick="submitDocumentV2('oczekuje')">Prześlij do dowódcy</button>
-            <button class="btn-light" onclick="saveDocumentDraft()">Zapisz szkic</button>
-            <button class="btn-light" onclick="downloadCurrentDocumentPDF()">Pobierz PDF</button>
-            <button class="btn-light" onclick="resetDocumentForm()">Wyczyść</button>
+          <div class="action-row">
+            <button class="btn-primary" onclick="doc2Save()">Zapisz dokument</button>
+            <button class="btn-light" onclick="doc2DownloadPDF()">Pobierz PDF</button>
+            <button class="btn-light" onclick="doc2Reset()">Wyczyść</button>
           </div>
-          <div id="docMsg" class="msg"></div>
+
+          <div id="doc2Msg" class="msg"></div>
         </div>
 
         <div class="panel">
           <div class="section-head">
             <div>
               <h3>Moje dokumenty</h3>
-              <p>Lista Twoich dokumentów, szkiców i dokumentów odesłanych do poprawy.</p>
+              <p>Dokumenty zapisane przez Ciebie.</p>
             </div>
-            <button class="btn-light" onclick="loadMyDocumentsV2()">Odśwież</button>
+            <button class="btn-light" onclick="doc2LoadMine()">Odśwież</button>
           </div>
+
           <div id="myDocsList" class="list"></div>
         </div>
       </section>
+
       <section id="commanderDocs" class="page hidden">
         <div class="panel">
           <div class="section-head">
             <div>
               <h3>Panel dowódcy</h3>
-              <p>Dokumenty przesłane do sprawdzenia, zatwierdzenia lub odesłania do poprawy.</p>
+              <p>Dokumenty przesłane do sprawdzenia.</p>
             </div>
-            <div class="top-actions">
-              <input id="commanderSearch" class="search" placeholder="Szukaj..." oninput="renderCommanderDocuments()" />
-              <select id="docFilter" onchange="renderCommanderDocuments()">
-                <option value="">Wszystkie</option>
-                <option value="oczekuje">Oczekujące</option>
-                <option value="sprawdzone">Zatwierdzone</option>
-                <option value="do_poprawy">Do poprawy</option>
-                <option value="odrzucone">Odrzucone</option>
-                <option value="szkic">Szkice</option>
-              </select>
-            </div>
+            <select id="docFilter" onchange="renderCommanderDocuments()">
+              <option value="">Wszystkie</option>
+              <option value="oczekuje">Oczekujące</option>
+              <option value="sprawdzone">Sprawdzone</option>
+              <option value="do_poprawy">Do poprawy</option>
+            </select>
           </div>
           <div id="commanderDocsList" class="list"></div>
         </div>
       </section>
+
+
       <section id="archive" class="page hidden">
         <div class="panel">
-          <div class="section-head">
-            <div>
-              <h3>Archiwum dokumentów</h3>
-              <p>Szybkie wyszukiwanie po numerze, funkcjonariuszu, typie, statusie i treści dokumentu.</p>
-            </div>
-            <button class="btn-light" onclick="exportDocumentsCSV()">Eksport CSV</button>
-          </div>
-
-          <div class="grid-4">
-            <input id="archiveSearch" class="search" placeholder="Szukaj..." oninput="renderArchive()" />
-            <select id="archiveStatus" onchange="renderArchive()">
-              <option value="">Każdy status</option>
-              <option value="oczekuje">Oczekujące</option>
-              <option value="sprawdzone">Zatwierdzone</option>
-              <option value="do_poprawy">Do poprawy</option>
-              <option value="odrzucone">Odrzucone</option>
-              <option value="szkic">Szkice</option>
-            </select>
-            <input id="archiveFrom" type="date" onchange="renderArchive()" />
-            <input id="archiveTo" type="date" onchange="renderArchive()" />
-          </div>
-
+          <div class="section-head"><div><h3>Archiwum dokumentów</h3><p>Szybkie wyszukiwanie po numerze, funkcjonariuszu i statusie.</p></div></div>
+          <input id="archiveSearch" class="search" placeholder="Szukaj..." oninput="loadArchive()" />
           <div id="archiveList" class="list"></div>
         </div>
       </section>
@@ -562,40 +539,19 @@
           <div id="activityList" class="list"></div>
         </div>
       </section>
+
       <section id="trash" class="page hidden">
         <div class="panel">
-          <div class="section-head">
-            <div>
-              <h3>Kosz dokumentów</h3>
-              <p>Dokumenty przeniesione do kosza. Administrator lub dowódca może je przywrócić.</p>
-            </div>
-            <button class="btn-light" onclick="loadTrash()">Odśwież</button>
-          </div>
+          <h3>Kosz dokumentów</h3>
           <div id="trashList" class="list"></div>
         </div>
       </section>
+
       <section id="settings" class="page hidden">
         <div class="panel">
-          <div class="section-head">
-            <div>
-              <h3>Centralny panel ustawień</h3>
-              <p>Numeracja dokumentów i podstawowe uprawnienia systemowe.</p>
-            </div>
-            <button class="btn-light" onclick="loadSettingsV2()">Odśwież</button>
-          </div>
-
+          <h3>Centralny panel ustawień</h3>
           <h4>Numeracja dokumentów</h4>
           <div id="numberingSettings" class="list"></div>
-
-          <h4>Uprawnienia systemowe</h4>
-          <div class="perm-grid">
-            <label class="perm-item"><input type="checkbox" checked disabled /> Pobieranie radiowozów</label>
-            <label class="perm-item"><input type="checkbox" checked disabled /> Tworzenie dokumentów</label>
-            <label class="perm-item"><input type="checkbox" checked disabled /> Archiwum dla dowódcy</label>
-            <label class="perm-item"><input type="checkbox" checked disabled /> Panel dowódcy</label>
-            <label class="perm-item"><input type="checkbox" checked disabled /> Kosz dokumentów</label>
-            <label class="perm-item"><input type="checkbox" checked disabled /> Ustawienia SWD</label>
-          </div>
         </div>
       </section>
 
@@ -612,6 +568,6 @@
   <script src="js/config.js"></script>
   <script src="js/app.js"></script>
   <script src="js/vehicles-module.js"></script>
-  <script src="js/swd-v2.js"></script>
+  <script src="js/documents-etap1.js"></script>
 </body>
 </html>
