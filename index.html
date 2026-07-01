@@ -50,113 +50,29 @@
     }
     .checkbox-line input { width: auto; }
   
-    .doc2-type-grid{
-      display:grid;
-      grid-template-columns:repeat(auto-fit,minmax(190px,1fr));
-      gap:12px;
-      margin:14px 0 18px;
-    }
-    .doc2-type{
-      border:1px solid #dbe3ee;
-      border-radius:14px;
-      background:#f8fafc;
-      padding:14px;
-      text-align:left;
-      margin:0;
-      cursor:pointer;
-      color:#0f172a;
-    }
-    .doc2-type b{
-      display:block;
-      color:#0b2b4d;
-      font-size:18px;
-      margin-bottom:4px;
-    }
-    .doc2-type span{font-weight:700}
-    .doc2-type.active{
-      background:#fff;
-      border-color:#0b2b4d;
-      box-shadow:0 4px 14px rgba(15,23,42,.12);
-    }
-    .doc2-paper{
-      background:#fff;
-      border:1px solid #cfd6df;
-      border-radius:10px;
-      padding:28px;
-      margin-top:16px;
-      color:#000;
-    }
-    .doc2-paper-head{
-      display:flex;
-      justify-content:space-between;
-      gap:20px;
-      font-size:13px;
-      margin-bottom:20px;
-    }
-    .doc2-paper h2{
-      text-align:center;
-      text-transform:uppercase;
-      font-family:"Times New Roman",serif;
-      margin:18px 0 24px;
-      letter-spacing:.5px;
-    }
-    .doc2-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}
-    .doc2-grid-3{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
-    .doc2-field{margin-top:12px}
-    .doc2-field label{
-      display:block;
-      font-weight:800;
-      font-size:13px;
-      margin-bottom:5px;
-    }
-    .doc2-field input,.doc2-field textarea,.doc2-field select{
-      width:100%;
-      padding:10px;
-      border:1px solid #cbd5e1;
-      border-radius:8px;
-    }
-    .doc2-sign{
-      margin-top:45px;
-      text-align:right;
-      font-size:13px;
-    }
-    .doc2-sign:before{
-      content:"";
-      display:block;
-      width:260px;
-      border-top:1px dotted #000;
-      margin-left:auto;
-      margin-bottom:6px;
-    }
-    .doc2-view-row{
-      display:grid;
-      grid-template-columns:210px 1fr;
-      gap:10px;
-      border-bottom:1px solid #eef2f7;
-      padding:7px 0;
-    }
-    .doc2-view-row b{color:#0b2b4d}
-    .vehicle-detail-box{
-      background:#ffffff;
-      border:1px solid #dbe3ee;
-      border-radius:14px;
-      padding:14px;
-      margin-top:12px;
-    }
-    .vehicle-detail-box h5{
-      margin:0 0 8px;
-      color:#0b2b4d;
-      font-size:15px;
-    }
-    .vehicle-detail-grid{
-      display:grid;
-      grid-template-columns:repeat(2,1fr);
-      gap:8px;
-      font-size:14px;
-    }
-    @media(max-width:900px){
-      .doc2-grid,.doc2-grid-3,.doc2-paper-head,.doc2-view-row,.vehicle-detail-grid{display:block}
-    }
+    .police-doc-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:12px;margin:14px 0}
+    .police-doc-card{margin:0;padding:14px;border:1px solid #dbe3ee;background:#f8fafc;color:#0f172a;border-radius:14px;text-align:left;cursor:pointer}
+    .police-doc-card b{display:block;font-size:18px;color:#0b2b4d;margin-bottom:4px}.police-doc-card span{font-weight:800}
+    .police-doc-card.active{background:#fff;border-color:#0b2b4d;box-shadow:0 4px 14px rgba(15,23,42,.14)}
+    #policeDocEditorWrap{display:flex;justify-content:center;margin-bottom:18px}#policeDocEditor{width:100%;display:flex;justify-content:center}
+    .police-a4{width:794px;min-height:1123px;background:#fff;color:#000;box-shadow:0 6px 22px rgba(15,23,42,.18);padding:58px 70px;box-sizing:border-box;font-family:"Times New Roman",Times,serif;font-size:15px;line-height:1.35}
+    .police-a4 h2{text-align:center;font-size:18px;margin:34px 0 22px;letter-spacing:.3px;text-transform:uppercase}
+    .police-top{display:flex;justify-content:space-between;gap:25px;margin-bottom:28px}
+    .line-edit{border:none;border-bottom:1.5px dotted #000;outline:none;min-height:20px;padding:1px 4px;display:inline-block;box-sizing:border-box;vertical-align:bottom;font-family:"Times New Roman",Times,serif;font-weight:bold;text-transform:uppercase}
+    .nu-line{border-bottom:1.5px dotted #000;min-height:22px;outline:none;padding:1px 3px;margin:4px 0;font-family:"Times New Roman",Times,serif;font-weight:bold;text-transform:uppercase;white-space:pre-wrap}
+    .police-section{margin-top:14px;page-break-inside:avoid}.police-section-title{font-weight:bold;text-decoration:underline;margin:14px 0 7px}
+    .police-area{border:1.5px dotted #000;min-height:80px;outline:none;padding:8px;margin-top:5px;font-family:"Times New Roman",Times,serif;font-weight:bold;text-transform:uppercase;white-space:pre-wrap}
+    .police-row{display:flex;align-items:flex-end;gap:5px;margin:7px 0;flex-wrap:wrap}
+    .police-checkbox{display:inline-flex;align-items:center;gap:5px;margin-right:15px;cursor:pointer}.police-checkbox .box{width:14px;height:14px;border:1px solid #000;display:inline-flex;align-items:center;justify-content:center;font-weight:bold;font-size:13px;line-height:1}
+    .crossable{cursor:pointer;padding:0 3px}.crossed{text-decoration:line-through;text-decoration-thickness:2px;font-weight:bold}
+    .signature-place{margin-top:45px;text-align:right;page-break-inside:avoid}.signature-place:before{content:"";display:block;width:260px;border-top:1.5px dotted #000;margin-left:auto;margin-bottom:5px}
+    .pzd-a4{width:794px;background:#fff;color:#000;box-shadow:0 6px 22px rgba(15,23,42,.18);padding:18px 22px;box-sizing:border-box;font-family:Arial,sans-serif;font-size:13px;line-height:1.35}
+    .pzd-doc{border:2px solid #000}.pzd-section{border-top:1px solid #000;padding:10px 14px}.pzd-section:first-child{border-top:none}.pzd-title{text-align:center;font-weight:bold;font-size:16px;margin:16px 0 18px}
+    .pzd-top{display:flex;justify-content:space-between;font-size:12px}.pzd-input{border:none;border-bottom:1.5px dotted #000;outline:none;min-height:18px;display:inline-block;padding:0 4px;font-weight:bold;text-transform:uppercase;flex:1;font-family:Arial,sans-serif}
+    .pzd-row{display:flex;align-items:flex-end;gap:5px;margin:7px 0;flex-wrap:wrap}.pzd-sub{font-size:10px;text-align:center;width:100%;margin-top:-3px}.pzd-checks{display:flex;gap:18px;flex-wrap:wrap;margin:7px 0}
+    .pzd-pesel{display:flex;border:1px solid #000;height:22px}.pzd-pesel span{width:18px;border-right:1px solid #000;display:inline-block;outline:none;text-align:center;font-weight:bold}.pzd-pesel span:last-child{border-right:none}
+    .pzd-signatures{display:flex;justify-content:space-between;margin-top:30px}.pzd-sign{width:45%;text-align:center}.pzd-sign:before{content:"";display:block;border-top:1.5px dotted #000;margin-bottom:5px}.pzd-foot{font-size:9px;margin-top:12px}
+    @media(max-width:900px){#policeDocEditorWrap{overflow:auto;justify-content:flex-start}}
 
   </style>
 
@@ -453,55 +369,37 @@
         <div class="panel">
           <div class="section-head">
             <div>
-              <h3>Dokumenty 2.0</h3>
-              <p>Tworzenie dokumentów bez zatwierdzania dowódcy. Dokument zapisuje się od razu w systemie i dostaje numer.</p>
+              <h3>Dokumenty</h3>
+              <p>Druki policyjne odwzorowane na wzorach. Wypełniasz bezpośrednio dokument, zapisujesz i pobierasz PDF.</p>
             </div>
           </div>
 
-          <div class="doc2-type-grid">
-            <button class="doc2-type active" onclick="doc2SelectType('notatka_sluzbowa')">
-              <b>NS</b><span>Notatka służbowa</span>
-            </button>
-            <button class="doc2-type" onclick="doc2SelectType('notatka_urzedowa')">
-              <b>NU</b><span>Notatka urzędowa</span>
-            </button>
-            <button class="doc2-type" onclick="doc2SelectType('wniosek_o_ukaranie')">
-              <b>WU</b><span>Wniosek o ukaranie</span>
-            </button>
-            <button class="doc2-type" onclick="doc2SelectType('zatrzymanie_dokumentu')">
-              <b>PZD</b><span>Pokwitowanie zatrzymania dokumentu</span>
-            </button>
-            <button class="doc2-type" onclick="doc2SelectType('bron_palna')">
-              <b>UBP</b><span>Użycie broni palnej</span>
-            </button>
-            <button class="doc2-type" onclick="doc2SelectType('paralizator')">
-              <b>UP</b><span>Użycie paralizatora</span>
-            </button>
+          <div class="police-doc-grid">
+            <button class="police-doc-card active" onclick="policeDocSelect('notatka_urzedowa')"><b>NU</b><span>Notatka urzędowa</span></button>
+            <button class="police-doc-card" onclick="policeDocSelect('wniosek_o_ukaranie')"><b>WU</b><span>Wniosek o ukaranie</span></button>
+            <button class="police-doc-card" onclick="policeDocSelect('zatrzymanie_dokumentu')"><b>PZD</b><span>Pokwitowanie zatrzymania dokumentu</span></button>
+            <button class="police-doc-card" onclick="policeDocSelect('notatka_sluzbowa')"><b>NS</b><span>Notatka służbowa</span></button>
+            <button class="police-doc-card" onclick="policeDocSelect('bron_palna')"><b>UBP</b><span>Użycie broni palnej</span></button>
+            <button class="police-doc-card" onclick="policeDocSelect('paralizator')"><b>UP</b><span>Użycie paralizatora</span></button>
           </div>
 
-          <input type="hidden" id="doc2Type" value="notatka_sluzbowa" />
-          <input type="hidden" id="doc2EditingId" />
-
-          <div id="doc2FormHost"></div>
+          <input type="hidden" id="policeDocType" value="notatka_urzedowa">
 
           <div class="action-row">
-            <button class="btn-primary" onclick="doc2Save()">Zapisz dokument</button>
-            <button class="btn-light" onclick="doc2DownloadPDF()">Pobierz PDF</button>
-            <button class="btn-light" onclick="doc2Reset()">Wyczyść</button>
+            <button class="btn-primary" onclick="policeDocSave()">Zapisz dokument</button>
+            <button class="btn-light" onclick="policeDocPdf()">Pobierz PDF</button>
+            <button class="btn-light" onclick="policeDocReset()">Wyczyść</button>
           </div>
-
-          <div id="doc2Msg" class="msg"></div>
+          <div id="policeDocMsg" class="msg"></div>
         </div>
+
+        <div id="policeDocEditorWrap"><div id="policeDocEditor"></div></div>
 
         <div class="panel">
           <div class="section-head">
-            <div>
-              <h3>Moje dokumenty</h3>
-              <p>Dokumenty zapisane przez Ciebie.</p>
-            </div>
-            <button class="btn-light" onclick="doc2LoadMine()">Odśwież</button>
+            <div><h3>Moje dokumenty</h3><p>Dokumenty zapisane przez Ciebie.</p></div>
+            <button class="btn-light" onclick="policeDocLoadMine()">Odśwież</button>
           </div>
-
           <div id="myDocsList" class="list"></div>
         </div>
       </section>
@@ -568,6 +466,6 @@
   <script src="js/config.js"></script>
   <script src="js/app.js"></script>
   <script src="js/vehicles-module.js"></script>
-  <script src="js/documents-etap1.js"></script>
+  <script src="js/dokumenty-policyjne.js"></script>
 </body>
 </html>
