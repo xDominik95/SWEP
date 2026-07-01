@@ -74,6 +74,68 @@
     .pzd-signatures{display:flex;justify-content:space-between;margin-top:30px}.pzd-sign{width:45%;text-align:center}.pzd-sign:before{content:"";display:block;border-top:1.5px dotted #000;margin-bottom:5px}.pzd-foot{font-size:9px;margin-top:12px}
     @media(max-width:900px){#policeDocEditorWrap{overflow:auto;justify-content:flex-start}}
 
+  
+    /* Dokumenty policyjne v2 */
+    .police-doc-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:12px;margin:14px 0}
+    .police-doc-card{margin:0;padding:14px;border:1px solid #dbe3ee;background:#f8fafc;color:#0f172a;border-radius:14px;text-align:left;cursor:pointer}
+    .police-doc-card b{display:block;font-size:18px;color:#0b2b4d;margin-bottom:4px}.police-doc-card span{font-weight:800}
+    .police-doc-card.active{background:#fff;border-color:#0b2b4d;box-shadow:0 4px 14px rgba(15,23,42,.14)}
+    #policeDocEditorWrap{display:flex;justify-content:center;margin-bottom:18px}
+    #policeDocEditor{width:100%;display:flex;justify-content:center}
+    .police-document{
+      color:#111;
+      background:#fff;
+      box-shadow:0 6px 22px rgba(15,23,42,.18);
+    }
+    .police-a4{
+      width:794px;
+      min-height:1123px;
+      padding:58px 70px;
+      box-sizing:border-box;
+      font-family:"Georgia","Cambria","Times New Roman",serif;
+      font-size:15px;
+      line-height:1.35;
+    }
+    .police-a4 h2{
+      text-align:center;
+      font-family:"Cambria","Georgia","Times New Roman",serif;
+      font-size:20px;
+      margin:34px 0 22px;
+      letter-spacing:.4px;
+      text-transform:uppercase;
+      font-weight:700;
+    }
+    .police-top{display:flex;justify-content:space-between;gap:25px;margin-bottom:28px}
+    .line-edit{border:none;border-bottom:1.5px dotted #000;outline:none;min-height:20px;padding:1px 4px;display:inline-block;box-sizing:border-box;vertical-align:bottom;font-family:"Georgia","Cambria","Times New Roman",serif;font-weight:700;text-transform:uppercase}
+    .nu-line{border-bottom:1.5px dotted #000;min-height:22px;outline:none;padding:1px 3px;margin:4px 0;font-family:"Georgia","Cambria","Times New Roman",serif;font-weight:700;text-transform:uppercase;white-space:pre-wrap}
+    .police-section{margin-top:14px;page-break-inside:avoid}.police-section-title{font-weight:800;text-decoration:underline;margin:14px 0 7px}
+    .police-area{border:1.5px dotted #000;min-height:80px;outline:none;padding:8px;margin-top:5px;font-family:"Georgia","Cambria","Times New Roman",serif;font-weight:700;text-transform:uppercase;white-space:pre-wrap}
+    .police-row{display:flex;align-items:flex-end;gap:5px;margin:7px 0;flex-wrap:wrap}
+    .police-checkbox{display:inline-flex;align-items:center;gap:5px;margin-right:15px;cursor:pointer}.police-checkbox .box{width:14px;height:14px;border:1px solid #000;display:inline-flex;align-items:center;justify-content:center;font-weight:bold;font-size:13px;line-height:1}
+    .yesno .pick{cursor:pointer;padding:0 3px}.yesno .selected{color:#c00000;font-weight:900;text-decoration:line-through;text-decoration-thickness:2px}
+    .crossable{cursor:pointer;padding:0 3px}.crossed{text-decoration:line-through;text-decoration-thickness:2px;font-weight:bold}
+    .signature-place{margin-top:45px;text-align:right;page-break-inside:avoid}.signature-place:before{content:"";display:block;width:260px;border-top:1.5px dotted #000;margin-left:auto;margin-bottom:5px}
+    .spb-a4{width:794px;min-height:1123px;background:#fff;padding:56px 66px;box-sizing:border-box;font-family:"Arial","Helvetica",sans-serif;font-size:18px;line-height:1.36}
+    .spb-a4 h2{text-align:center;font-family:"Georgia","Cambria","Times New Roman",serif;font-size:30px;letter-spacing:.5px;margin:48px 0 25px}
+    .spb-sub{text-align:center;font-family:"Georgia","Cambria","Times New Roman",serif;font-size:21px;margin-bottom:36px}
+    .spb-head{display:flex;justify-content:flex-end}
+    .spb-head-box{width:290px;font-size:18px}
+    .spb-line{border-bottom:1.5px dotted #000;display:inline-block;min-width:120px;min-height:22px;outline:none;font-weight:800;text-align:center;padding:0 4px}
+    .spb-fill{border-bottom:1.5px dotted #000;display:inline-block;min-width:160px;min-height:22px;outline:none;font-weight:800;padding:0 4px}
+    .spb-box{border:1.5px dotted #000;min-height:70px;padding:13px;outline:none;font-weight:800;margin:8px 0 25px}
+    .spb-section-title{font-weight:900;text-decoration:underline;margin:24px 0 14px;font-size:21px}
+    .spb-check{display:flex;align-items:center;gap:6px;margin:5px 0;cursor:pointer}.spb-check .box{font-family:monospace;font-weight:900;color:#c00000;font-size:22px;width:20px}
+    .spb-red{color:#c00000;font-weight:900}
+    .spb-desc{border:1.5px dotted #000;min-height:720px;padding:15px;outline:none;font-weight:800;white-space:pre-wrap}
+    .spb-stamp{margin-top:120px;margin-left:auto;width:260px;height:95px;border:4px solid #555;transform:rotate(-3deg);display:flex;flex-direction:column;align-items:center;justify-content:center;font-family:Georgia,serif;font-weight:900;font-size:22px;color:#555}
+    .pzd-a4{width:794px;background:#fff;color:#000;box-shadow:0 6px 22px rgba(15,23,42,.18);padding:18px 22px;box-sizing:border-box;font-family:Arial,sans-serif;font-size:13px;line-height:1.35}
+    .pzd-doc{border:2px solid #000}.pzd-section{border-top:1px solid #000;padding:10px 14px}.pzd-section:first-child{border-top:none}.pzd-title{text-align:center;font-weight:bold;font-size:16px;margin:16px 0 18px}
+    .pzd-top{display:flex;justify-content:space-between;font-size:12px}.pzd-input{border:none;border-bottom:1.5px dotted #000;outline:none;min-height:18px;display:inline-block;padding:0 4px;font-weight:bold;text-transform:uppercase;flex:1;font-family:Arial,sans-serif}
+    .pzd-row{display:flex;align-items:flex-end;gap:5px;margin:7px 0;flex-wrap:wrap}.pzd-sub{font-size:10px;text-align:center;width:100%;margin-top:-3px}.pzd-checks{display:flex;gap:18px;flex-wrap:wrap;margin:7px 0}
+    .pzd-pesel{display:flex;border:1px solid #000;height:22px}.pzd-pesel span{width:18px;border-right:1px solid #000;display:inline-block;outline:none;text-align:center;font-weight:bold}.pzd-pesel span:last-child{border-right:none}
+    .pzd-signatures{display:flex;justify-content:space-between;margin-top:30px}.pzd-sign{width:45%;text-align:center}.pzd-sign:before{content:"";display:block;border-top:1.5px dotted #000;margin-bottom:5px}.pzd-foot{font-size:9px;margin-top:12px}
+    @media(max-width:900px){#policeDocEditorWrap{overflow:auto;justify-content:flex-start}}
+
   </style>
 
 </head>
@@ -370,17 +432,16 @@
           <div class="section-head">
             <div>
               <h3>Dokumenty</h3>
-              <p>Druki policyjne odwzorowane na wzorach. Wypełniasz bezpośrednio dokument, zapisujesz i pobierasz PDF.</p>
+              <p>Druki policyjne odwzorowane na wzorach. Wypełniasz dokument bezpośrednio na kartce A4.</p>
             </div>
           </div>
 
           <div class="police-doc-grid">
             <button class="police-doc-card active" onclick="policeDocSelect('notatka_urzedowa')"><b>NU</b><span>Notatka urzędowa</span></button>
+            <button class="police-doc-card" onclick="policeDocSelect('notatka_sluzbowa')"><b>NS</b><span>Notatka służbowa</span></button>
+            <button class="police-doc-card" onclick="policeDocSelect('raport_spb')"><b>RŚPB</b><span>Użycie ŚPB / broni palnej</span></button>
             <button class="police-doc-card" onclick="policeDocSelect('wniosek_o_ukaranie')"><b>WU</b><span>Wniosek o ukaranie</span></button>
             <button class="police-doc-card" onclick="policeDocSelect('zatrzymanie_dokumentu')"><b>PZD</b><span>Pokwitowanie zatrzymania dokumentu</span></button>
-            <button class="police-doc-card" onclick="policeDocSelect('notatka_sluzbowa')"><b>NS</b><span>Notatka służbowa</span></button>
-            <button class="police-doc-card" onclick="policeDocSelect('bron_palna')"><b>UBP</b><span>Użycie broni palnej</span></button>
-            <button class="police-doc-card" onclick="policeDocSelect('paralizator')"><b>UP</b><span>Użycie paralizatora</span></button>
           </div>
 
           <input type="hidden" id="policeDocType" value="notatka_urzedowa">
@@ -466,6 +527,7 @@
   <script src="js/config.js"></script>
   <script src="js/app.js"></script>
   <script src="js/vehicles-module.js"></script>
+  <script src="js/dokumenty-policyjne-v2.js"></script>
   <script src="js/dokumenty-policyjne.js"></script>
 </body>
 </html>
