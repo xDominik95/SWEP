@@ -469,3 +469,72 @@ async function deleteOfficerProfile(id){
   await loadProfiles();
 }
 
+
+
+/* === POPRAWKA LOGOWANIA PIN === */
+
+async function login(){
+  const raw = document.getElementById('loginEmail').value.trim();
+  const password = document.getElementById('loginPassword').value.trim();
+
+  if(!raw || !password){
+    return msg('loginMsg','Wpisz login i PIN.',false);
+  }
+
+  const loginKey = slugifyName(raw);
+
+  // 1. Logowanie PIN-em z tabeli profile
+  const { data: profileByLogin, error: loginErr } = await supabaseClient
+    .from('profile')
+    .select('*')
+    .eq('login_name', loginKey)
+    .maybeSingle();
+
+  if(loginErr){
+    console.error('PIN login error:', loginErr);
+    return msg('loginMsg', loginErr.message, false);
+  }
+
+  if(profileByLogin){
+    if(String(profileByLogin.pin_code || '') === String(password)){
+      return await enterProfileApp(profileByLogin);
+    }
+    return msg('loginMsg','Nieprawidłowy PIN.',false);
+  }
+
+  // 2. Próba po imieniu i nazwisku, gdy ktoś wpisze ze spacją zamiast myślnika
+  const nameSearch = raw.replaceAll('-', ' ');
+  const { data: profileByName, error: nameErr } = await supabaseClient
+    .from('profile')
+    .select('*')
+    .ilike('imie_nazwisko', nameSearch)
+    .maybeSingle();
+
+  if(nameErr){
+    console.error('PIN name login error:', nameErr);
+  }
+
+  if(profileByName){
+    if(String(profileByName.pin_code || '') === String(password)){
+      return await enterProfileApp(profileByName);
+    }
+    return msg('loginMsg','Nieprawidłowy PIN.',false);
+  }
+
+  // 3. Awaryjne stare logowanie e-mail/hasło tylko gdy podano email
+  if(raw.includes('@')){
+    const {data,error} = await supabaseClient.auth.signInWithPassword({
+      email: raw,
+      password
+    });
+
+    if(error) return msg('loginMsg','Nieprawidłowy email lub hasło.',false);
+
+    await enterApp(data.user);
+    await logActivity('logowanie','Użytkownik zalogował się do systemu');
+    return;
+  }
+
+  return msg('loginMsg','Nie znaleziono konta o takim loginie.',false);
+}
+
