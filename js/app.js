@@ -354,3 +354,118 @@ async function loadProfiles(){
   await loadRankRates();
 }
 
+
+
+/* === POPRAWKA FK + PIN + USUWANIE KONTA === */
+
+async function createOfficerAccount(){
+  try{
+    if(!isCommander()) return alert('Brak uprawnień.');
+
+    await loadRankRates();
+
+    const name = swdText('newOfficerName');
+    const rank = swdText('newOfficerRank');
+    const badge = swdText('newOfficerBadge');
+    const role = document.getElementById('newOfficerRole')?.value || 'funkcjonariusz';
+
+    if(!name) return swdSetMsg('newOfficerMsg','Wpisz imię i nazwisko.',false);
+    if(!rank) return swdSetMsg('newOfficerMsg','Wybierz stopień.',false);
+
+    const loginBase = slugifyName(name);
+    const pin = generatePin();
+    const rate = getRateForRank(rank);
+
+    let login = loginBase;
+    let email = `${login}@swd.local`;
+
+    const { data: existing } = await supabaseClient
+      .from('profile')
+      .select('login_name')
+      .eq('login_name', login)
+      .maybeSingle();
+
+    if(existing){
+      login = `${loginBase}-${Math.floor(100 + Math.random()*900)}`;
+      email = `${login}@swd.local`;
+    }
+
+    const row = {
+      id: crypto.randomUUID(),
+      email,
+      login_name: login,
+      pin_code: pin,
+      stopien: rank,
+      imie_nazwisko: name,
+      numer_sluzbowy: badge,
+      rola: role,
+      stawka_godzinowa: rate,
+      godziny_reset_at: new Date(0).toISOString()
+    };
+
+    const { error } = await supabaseClient.from('profile').insert(row);
+
+    if(error){
+      console.error(error);
+      return swdSetMsg('newOfficerMsg', error.message, false);
+    }
+
+    swdSetMsg('newOfficerMsg', `Konto utworzone. Login: ${login} | PIN: ${pin}`, true);
+
+    ['newOfficerName','newOfficerBadge'].forEach(id => {
+      const el = document.getElementById(id);
+      if(el) el.value = '';
+    });
+
+    const rankEl = document.getElementById('newOfficerRank');
+    if(rankEl) rankEl.value = '';
+
+    const roleEl = document.getElementById('newOfficerRole');
+    if(roleEl) roleEl.value = 'funkcjonariusz';
+
+    await loadProfiles();
+  }catch(err){
+    console.error(err);
+    swdSetMsg('newOfficerMsg', err.message || String(err), false);
+  }
+}
+
+async function regenerateOfficerPin(id){
+  if(!isCommander()) return alert('Brak uprawnień.');
+
+  const pin = generatePin();
+
+  const { error } = await supabaseClient
+    .from('profile')
+    .update({ pin_code: pin })
+    .eq('id', id);
+
+  if(error){
+    console.error(error);
+    return alert(error.message);
+  }
+
+  await loadProfiles();
+  alert(`Nowy PIN: ${pin}`);
+}
+
+async function deleteOfficerProfile(id){
+  if(!isCommander()) return alert('Brak uprawnień.');
+  if(!confirm('Na pewno usunąć konto funkcjonariusza?')) return;
+
+  // Najpierw usuwamy powiązane wpisy godzin, żeby nie blokowały usunięcia.
+  await supabaseClient.from('sluzby').delete().eq('funkcjonariusz_id', id);
+
+  const { error } = await supabaseClient
+    .from('profile')
+    .delete()
+    .eq('id', id);
+
+  if(error){
+    console.error(error);
+    return alert(error.message);
+  }
+
+  await loadProfiles();
+}
+
