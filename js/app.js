@@ -130,3 +130,227 @@ async function loadTrash(){const {data,error}=await supabaseClient.from('dokumen
 async function loadSettings(){const {data}=await supabaseClient.from('numeracja_dokumentow').select('*').order('typ');const box=document.getElementById('numberingSettings');if(box)box.innerHTML=(data||[]).map(n=>`<div class="list-item"><h4>${n.typ}</h4><p>Prefix: <b>${n.prefix}</b> | Rok: ${n.rok} | Ostatni numer: ${n.ostatni_numer}</p></div>`).join('')}
 function updateStats(){document.getElementById('statVehicles').textContent=(window.pojazdyLista||[]).length||0;document.getElementById('statPatrol').textContent=(window.aktywneKartyPojazdow||[]).length||0;document.getElementById('statDocs').textContent=document.querySelectorAll('#myDocsList .list-item').length||0}
 init();
+
+/* === POPRAWKA: tworzenie konta i PIN === */
+
+function swdText(id){
+  return document.getElementById(id)?.value?.trim() || '';
+}
+
+function swdSetMsg(id, text, ok=true){
+  const el = document.getElementById(id);
+  if(!el) return;
+  el.textContent = text || '';
+  el.style.color = ok ? '#187a2f' : '#b00020';
+}
+
+function slugifyName(name){
+  return String(name || '')
+    .trim()
+    .toLowerCase()
+    .normalize('NFD').replace(/[\u0300-\u036f]/g,'')
+    .replace(/ł/g,'l')
+    .replace(/[^a-z0-9]+/g,'-')
+    .replace(/^-+|-+$/g,'');
+}
+
+function generatePin(){
+  return String(Math.floor(1000 + Math.random() * 9000));
+}
+
+async function loadRankRates(){
+  const { data, error } = await supabaseClient
+    .from('stopnie_stawki')
+    .select('*')
+    .order('kolejnosc', { ascending:true });
+
+  if(error){
+    console.error(error);
+    return;
+  }
+
+  rankRatesCache = data || [];
+
+  const newRank = document.getElementById('newOfficerRank');
+  if(newRank){
+    const selected = newRank.value;
+    newRank.innerHTML = '<option value="">Wybierz stopień</option>' + rankRatesCache.map(r =>
+      `<option value="${r.stopien}" data-rate="${r.stawka}">${r.stopien} — ${r.stawka} zł</option>`
+    ).join('');
+    if(selected) newRank.value = selected;
+  }
+
+  document.querySelectorAll('.profile-rank-select').forEach(select => {
+    const selected = select.value;
+    select.innerHTML = '<option value="">Wybierz stopień</option>' + rankRatesCache.map(r =>
+      `<option value="${r.stopien}" data-rate="${r.stawka}">${r.stopien} — ${r.stawka} zł</option>`
+    ).join('');
+    if(selected) select.value = selected;
+  });
+
+  const box = document.getElementById('rankRatesList');
+  if(box){
+    box.innerHTML = rankRatesCache.map(r => `
+      <div class="list-item rank-rate-row">
+        <h4>${r.stopien}</h4>
+        <div class="grid-4">
+          <input id="rank_rate_${r.id}" type="number" value="${r.stawka || 0}">
+          <input id="rank_order_${r.id}" type="number" value="${r.kolejnosc || 0}">
+          <button class="btn-primary" onclick="saveRankRate(${r.id})">Zapisz</button>
+        </div>
+      </div>
+    `).join('');
+  }
+}
+
+function getRateForRank(rank){
+  const found = (rankRatesCache || []).find(r => r.stopien === rank);
+  return Number(found?.stawka || 0);
+}
+
+function applyRankRateToNewOfficer(){
+  const rank = swdText('newOfficerRank');
+  const rate = getRateForRank(rank);
+  swdSetMsg('newOfficerMsg', rank ? `Wybrany stopień: ${rank} | stawka: ${rate} zł` : '', true);
+}
+
+async function createOfficerAccount(){
+  try{
+    if(!isCommander()) return alert('Brak uprawnień.');
+
+    await loadRankRates();
+
+    const name = swdText('newOfficerName');
+    const rank = swdText('newOfficerRank');
+    const badge = swdText('newOfficerBadge');
+    const role = document.getElementById('newOfficerRole')?.value || 'funkcjonariusz';
+
+    if(!name) return swdSetMsg('newOfficerMsg','Wpisz imię i nazwisko.',false);
+    if(!rank) return swdSetMsg('newOfficerMsg','Wybierz stopień.',false);
+
+    const loginBase = slugifyName(name);
+    const pin = generatePin();
+    const rate = getRateForRank(rank);
+
+    let login = loginBase;
+    let email = `${login}@swd.local`;
+
+    // Jeżeli login istnieje, dodaj końcówkę z numerem.
+    const { data: existing } = await supabaseClient
+      .from('profile')
+      .select('login_name')
+      .eq('login_name', login)
+      .maybeSingle();
+
+    if(existing){
+      login = `${loginBase}-${Math.floor(100 + Math.random()*900)}`;
+      email = `${login}@swd.local`;
+    }
+
+    const row = {
+      id: crypto.randomUUID(),
+      email,
+      login_name: login,
+      pin_code: pin,
+      stopien: rank,
+      imie_nazwisko: name,
+      numer_sluzbowy: badge,
+      rola: role,
+      stawka_godzinowa: rate,
+      godziny_reset_at: new Date(0).toISOString()
+    };
+
+    const { error } = await supabaseClient.from('profile').insert(row);
+
+    if(error){
+      console.error(error);
+      return swdSetMsg('newOfficerMsg', error.message, false);
+    }
+
+    swdSetMsg('newOfficerMsg', `Konto utworzone. Login: ${login} | PIN: ${pin}`, true);
+
+    ['newOfficerName','newOfficerBadge'].forEach(id => {
+      const el = document.getElementById(id);
+      if(el) el.value = '';
+    });
+    const rankEl = document.getElementById('newOfficerRank');
+    if(rankEl) rankEl.value = '';
+    const roleEl = document.getElementById('newOfficerRole');
+    if(roleEl) roleEl.value = 'funkcjonariusz';
+
+    await loadProfiles();
+  }catch(err){
+    console.error(err);
+    swdSetMsg('newOfficerMsg', err.message || String(err), false);
+  }
+}
+
+function applyRankRateToProfile(id){
+  // stawka zapisuje się automatycznie według stopnia
+}
+
+async function saveOfficerProfile(id){
+  if(!isCommander()) return alert('Brak uprawnień.');
+
+  const name = swdText(`prof_name_${id}`);
+  const rank = document.getElementById(`prof_rank_${id}`)?.value || '';
+  const login = slugifyName(name);
+
+  const patch = {
+    imie_nazwisko: name,
+    login_name: login,
+    email: `${login}@swd.local`,
+    stopien: rank,
+    numer_sluzbowy: swdText(`prof_badge_${id}`),
+    stawka_godzinowa: Number(getRateForRank(rank) || 0),
+    rola: document.getElementById(`prof_role_${id}`)?.value || 'funkcjonariusz'
+  };
+
+  const { error } = await supabaseClient.from('profile').update(patch).eq('id', id);
+  if(error) return alert(error.message);
+
+  await loadProfiles();
+  alert('Zapisano zmiany.');
+}
+
+async function loadProfiles(){
+  const {data,error} = await supabaseClient.from('profile').select('*').order('created_at',{ascending:false});
+  const box = document.getElementById('profilesList');
+  if(!box) return;
+
+  if(error){
+    box.innerHTML = `<div class="empty">${error.message}</div>`;
+    return;
+  }
+
+  box.innerHTML = (data || []).map(p => `
+    <div class="list-item">
+      <h4>${p.stopien || ''} ${p.imie_nazwisko || p.login_name || p.email}</h4>
+      <p><b>Login:</b> ${p.login_name || '-'} | <b>PIN:</b> ${p.pin_code || '-'}</p>
+      <p><b>Stawka ze stopnia:</b> ${p.stawka_godzinowa || getRateForRank(p.stopien) || 0} zł</p>
+
+      <div class="grid-4">
+        <input id="prof_name_${p.id}" value="${String(p.imie_nazwisko || '').replaceAll('"','&quot;')}" placeholder="Imię i nazwisko">
+        <select class="profile-rank-select" id="prof_rank_${p.id}" onchange="applyRankRateToProfile('${p.id}')">
+          <option value="${p.stopien || ''}">${p.stopien || 'Wybierz stopień'}</option>
+        </select>
+        <input id="prof_badge_${p.id}" value="${String(p.numer_sluzbowy || '').replaceAll('"','&quot;')}" placeholder="Numer służbowy">
+        <select id="prof_role_${p.id}">
+          <option value="funkcjonariusz" ${p.rola==='funkcjonariusz'?'selected':''}>funkcjonariusz</option>
+          <option value="zastepca" ${p.rola==='zastepca'?'selected':''}>zastepca</option>
+          <option value="dowodca" ${p.rola==='dowodca'?'selected':''}>dowodca</option>
+          <option value="admin" ${p.rola==='admin'?'selected':''}>admin</option>
+        </select>
+      </div>
+
+      <div class="action-row">
+        <button class="btn-primary" onclick="saveOfficerProfile('${p.id}')">Zapisz zmiany</button>
+        <button class="btn-light" onclick="regenerateOfficerPin('${p.id}')">Nowy PIN</button>
+        <button class="btn-danger" onclick="deleteOfficerProfile('${p.id}')">Usuń konto</button>
+      </div>
+    </div>
+  `).join('') || '<div class="empty">Brak funkcjonariuszy.</div>';
+
+  await loadRankRates();
+}
+
