@@ -56,15 +56,15 @@ function getRateForRank(rank){
 function applyRankRateToNewOfficer(){
   const rank = document.getElementById('newOfficerRank')?.value || '';
   const rate = getRateForRank(rank);
-  const input = document.getElementById('newOfficerRate');
-  if(input && rate) input.value = rate;
+  const msgBox = document.getElementById('newOfficerMsg');
+  if(msgBox && rate) {
+    msgBox.textContent = `Wybrany stopień: ${rank} | stawka: ${rate} zł`;
+    msgBox.style.color = '#187a2f';
+  }
 }
 
 function applyRankRateToProfile(id){
-  const rank = document.getElementById(`prof_rank_${id}`)?.value || '';
-  const rate = getRateForRank(rank);
-  const input = document.getElementById(`prof_rate_${id}`);
-  if(input && rate) input.value = rate;
+  // Stawka jest przypisana automatycznie do stopnia przy zapisie profilu.
 }
 
 async function saveRankRate(id){
