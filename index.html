@@ -231,7 +231,9 @@
           <p>Dowódca wpisuje dane, a system generuje login i 4-cyfrowy PIN.</p>
           <div class="grid-4">
             <input id="newOfficerName" placeholder="Imię i nazwisko">
-            <input id="newOfficerRank" placeholder="Stopień">
+            <select id="newOfficerRank" onchange="applyRankRateToNewOfficer()">
+              <option value="">Wybierz stopień</option>
+            </select>
             <input id="newOfficerBadge" placeholder="Numer służbowy">
             <input id="newOfficerRate" type="number" placeholder="Stawka godzinowa">
             <select id="newOfficerRole">
@@ -261,7 +263,23 @@
       <section id="archive" class="page hidden"><div class="panel"><div class="section-head"><div><h3>Archiwum dokumentów</h3><p>Wyszukiwanie zapisanych dokumentów.</p></div><button class="btn-light" onclick="loadArchive()">Odśwież</button></div><input id="archiveSearch" placeholder="Szukaj..." oninput="loadArchive()" /><div id="archiveList" class="list"></div></div></section>
       <section id="activity" class="page hidden"><div class="panel"><h3>Aktywność</h3><div id="activityList" class="list"></div></div></section>
       <section id="trash" class="page hidden"><div class="panel"><h3>Kosz</h3><div id="trashList" class="list"></div></div></section>
-      <section id="settings" class="page hidden"><div class="panel"><h3>Ustawienia</h3><div id="numberingSettings" class="list"></div></div></section>
+      <section id="settings" class="page hidden">
+        <div class="panel commander-only hidden">
+          <div class="section-head">
+            <div>
+              <h3>Stopnie i stawki</h3>
+              <p>Lista stopni służbowych oraz przypisane kwoty.</p>
+            </div>
+            <button class="btn-light" onclick="loadRankRates()">Odśwież</button>
+          </div>
+          <div id="rankRatesList" class="list"></div>
+        </div>
+
+        <div class="panel commander-only hidden">
+          <h3>Numeracja dokumentów</h3>
+          <div id="numberingSettings" class="list"></div>
+        </div>
+      </section>
     </main>
   </div>
 

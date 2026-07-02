@@ -1,6 +1,85 @@
 let currentUser=null,currentProfile=null;
 function msg(id,text,ok=true){const e=document.getElementById(id);if(!e)return;e.textContent=text||'';e.style.color=ok?'#187a2f':'#b00020'}
 
+
+let rankRatesCache = [];
+
+async function loadRankRates(){
+  const { data, error } = await supabaseClient
+    .from('stopnie_stawki')
+    .select('*')
+    .order('kolejnosc', { ascending:true });
+
+  rankRatesCache = data || [];
+
+  const newRank = document.getElementById('newOfficerRank');
+  if(newRank){
+    const selected = newRank.value;
+    newRank.innerHTML = '<option value="">Wybierz stopień</option>' + rankRatesCache.map(r => 
+      `<option value="${r.stopien}" data-rate="${r.stawka}">${r.stopien} — ${r.stawka} zł</option>`
+    ).join('');
+    newRank.value = selected;
+  }
+
+  document.querySelectorAll('.profile-rank-select').forEach(select => {
+    const selected = select.value;
+    select.innerHTML = '<option value="">Wybierz stopień</option>' + rankRatesCache.map(r =>
+      `<option value="${r.stopien}" data-rate="${r.stawka}">${r.stopien} — ${r.stawka} zł</option>`
+    ).join('');
+    select.value = selected;
+  });
+
+  const box = document.getElementById('rankRatesList');
+  if(box){
+    if(error){
+      box.innerHTML = `<div class="empty">${error.message}</div>`;
+    }else{
+      box.innerHTML = rankRatesCache.map(r => `
+        <div class="list-item rank-rate-row">
+          <h4>${r.stopien}</h4>
+          <div class="grid-4">
+            <input id="rank_rate_${r.id}" type="number" value="${r.stawka || 0}">
+            <input id="rank_order_${r.id}" type="number" value="${r.kolejnosc || 0}">
+            <button class="btn-primary" onclick="saveRankRate(${r.id})">Zapisz</button>
+          </div>
+        </div>
+      `).join('');
+    }
+  }
+}
+
+function getRateForRank(rank){
+  const found = rankRatesCache.find(r => r.stopien === rank);
+  return Number(found?.stawka || 0);
+}
+
+function applyRankRateToNewOfficer(){
+  const rank = document.getElementById('newOfficerRank')?.value || '';
+  const rate = getRateForRank(rank);
+  const input = document.getElementById('newOfficerRate');
+  if(input && rate) input.value = rate;
+}
+
+function applyRankRateToProfile(id){
+  const rank = document.getElementById(`prof_rank_${id}`)?.value || '';
+  const rate = getRateForRank(rank);
+  const input = document.getElementById(`prof_rate_${id}`);
+  if(input && rate) input.value = rate;
+}
+
+async function saveRankRate(id){
+  if(!isCommander()) return alert('Brak uprawnień.');
+  const stawka = Number(document.getElementById(`rank_rate_${id}`).value || 0);
+  const kolejnosc = Number(document.getElementById(`rank_order_${id}`).value || 0);
+  const { error } = await supabaseClient
+    .from('stopnie_stawki')
+    .update({ stawka, kolejnosc })
+    .eq('id', id);
+  if(error) return alert(error.message);
+  await loadRankRates();
+  alert('Zapisano stawkę.');
+}
+
 function slugifyName(name){
   return String(name||'').trim().toLowerCase()
     .normalize('NFD').replace(/[\u0300-\u036f]/g,'')
@@ -40,8 +119,8 @@ async function logout(){await logActivity('wylogowanie','Użytkownik wylogował 
 async function enterApp(user){currentUser=user;document.getElementById('loginView').classList.add('hidden');document.getElementById('registerView').classList.add('hidden');document.getElementById('appView').classList.remove('hidden');let {data:profile}=await supabaseClient.from('profile').select('*').eq('id',user.id).maybeSingle();if(!profile){const byEmail=await supabaseClient.from('profile').select('*').eq('email',user.email).maybeSingle();profile=byEmail.data;if(profile&&profile.id!==user.id){await supabaseClient.from('profile').update({id:user.id}).eq('email',user.email);profile.id=user.id}}if(!profile){const p={id:user.id,email:user.email,stopien:'',imie_nazwisko:user.email,numer_sluzbowy:'',rola:'funkcjonariusz'};const {data:c}=await supabaseClient.from('profile').insert(p).select().single();profile=c||p}currentProfile=profile;document.querySelectorAll('.commander-only').forEach(e=>e.classList.add('hidden'));const display=officerDisplay(profile);document.getElementById('userInfo').textContent=`${display} | nr służbowy: ${profile.numer_sluzbowy || '-'} | login: ${profile.login_name || '-'}`;document.getElementById('rolePill').textContent=profile.rola||'funkcjonariusz';document.getElementById('statRole').textContent=profile.rola||'funkcjonariusz';if(isCommander())document.querySelectorAll('.commander-only').forEach(e=>e.classList.remove('hidden'));await refreshAll()}
 function isCommander(){return ['admin','dowodca','zastepca'].includes(currentProfile?.rola)}
 async function logActivity(akcja,opis){try{if(!currentProfile)return;await supabaseClient.from('aktywnosc').insert({uzytkownik:currentProfile.imie_nazwisko||currentProfile.email,rola:currentProfile.rola,akcja,opis})}catch(e){}}
-async function refreshAll(){await loadPojazdySystem();await policeDocLoadMine();if(isCommander()){await loadProfiles();await loadArchive();await loadActivity();await loadTrash();await loadSettings()}updateStats()}
-function refreshCurrentPage(){const id=[...document.querySelectorAll('.page')].find(p=>!p.classList.contains('hidden'))?.id;if(id==='vehicles')loadPojazdySystem();else if(id==='documents')policeDocLoadMine();else if(id==='hours')loadHoursModule();else if(id==='users')loadProfiles();else if(id==='archive')loadArchive();else if(id==='activity')loadActivity();else if(id==='trash')loadTrash();else if(id==='settings')loadSettings();else refreshAll()}
+async function refreshAll(){await loadPojazdySystem();await policeDocLoadMine();await loadRankRates();if(isCommander()){await loadProfiles();await loadArchive();await loadActivity();await loadTrash();await loadSettings()}updateStats()}
+function refreshCurrentPage(){const id=[...document.querySelectorAll('.page')].find(p=>!p.classList.contains('hidden'))?.id;if(id==='vehicles')loadPojazdySystem();else if(id==='documents')policeDocLoadMine();else if(id==='hours')loadHoursModule();else if(id==='users')loadProfiles();else if(id==='archive')loadArchive();else if(id==='activity')loadActivity();else if(id==='trash')loadTrash();else if(id==='settings'){loadSettings();loadRankRates();}else refreshAll()}
 function showPage(id,btn){document.querySelectorAll('.page').forEach(p=>p.classList.add('hidden'));document.getElementById(id).classList.remove('hidden');document.querySelectorAll('.nav').forEach(n=>n.classList.remove('active'));if(btn)btn.classList.add('active');const t={dashboard:'Pulpit',vehicles:'Pojazdy',documents:'Dokumenty',hours:'Godziny służby',users:'Funkcjonariusze',archive:'Archiwum',activity:'Aktywność',trash:'Kosz',settings:'Ustawienia'};document.getElementById('pageTitle').textContent=t[id]||'SWD';refreshCurrentPage()}
 function quickPage(id){const btn=[...document.querySelectorAll('.nav')].find(b=>b.getAttribute('onclick')?.includes(`'${id}'`));showPage(id,btn)}
 async function loadProfiles(){const {data,error}=await supabaseClient.from('profile').select('*').order('created_at',{ascending:false});const box=document.getElementById('profilesList');if(!box)return;if(error){box.innerHTML=`<div class="empty">${error.message}</div>`;return}box.innerHTML=(data||[]).map(p=>`<div class="list-item"><h4>${p.stopien||''} ${p.imie_nazwisko||p.email}</h4><p>Email: ${p.email||''}</p><p>Nr służbowy: ${p.numer_sluzbowy||''}</p><p>Rola: <b>${p.rola||'funkcjonariusz'}</b></p></div>`).join('')||'<div class="empty">Brak funkcjonariuszy.</div>'}
