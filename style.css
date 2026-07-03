@@ -58,3 +58,25 @@
   font-size:13px;
   margin-top:4px;
 }
+
+
+/* SWD poprawka: podpis w PZD */
+.pzd-sign-hand:before{
+  display:none !important;
+}
+.pzd-hand{
+  font-size:28px !important;
+  min-height:34px !important;
+  line-height:34px !important;
+  margin-bottom:4px;
+}
+
+
+/* SWD PZD stabilne podpisy */
+.pzd-sign-hand:before{display:none!important}
+.pzd-hand{
+  font-size:27px!important;
+  min-height:34px!important;
+  line-height:34px!important;
+  margin-bottom:4px;
+}
