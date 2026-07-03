@@ -15,3 +15,136 @@ function policeDocPdf(){const el=document.querySelector('.police-document');if(!
 function policeDocReset(){policeDocRender()}async function policeDocLoadMine(){const box=document.getElementById('myDocsList');if(!box||!currentProfile)return;const {data,error}=await supabaseClient.from('dokumenty').select('*').is('deleted_at',null).eq('funkcjonariusz',currentProfile?.imie_nazwisko||currentUser?.email).order('created_at',{ascending:false}).limit(100);if(error){box.innerHTML=`<div class="empty">${policeEsc(error.message)}</div>`;return}box.innerHTML=(data||[]).map(d=>`<div class="list-item"><span class="status zapisany">${policeEsc(d.status||'zapisany')}</span><h4>${policeEsc(d.numer_dokumentu||'')} — ${policeEsc(d.tytul||'')}</h4><p><b>Autor:</b> ${policeEsc(d.stopien||'')} ${policeEsc(d.funkcjonariusz||'')}</p><p class="small"><b>Data:</b> ${policeEsc((d.created_at||'').slice(0,16).replace('T',' '))}</p><p>${policeEsc(d.tresc?.plainText||d.tresc?.opis||'').slice(0,450)}</p><div class="action-row"><button class="btn-light" onclick="policeDocOpen(${d.id})">Otwórz</button></div></div>`).join('')||'<div class="empty">Brak dokumentów.</div>';updateStats()}
 async function policeDocOpen(id){const {data,error}=await supabaseClient.from('dokumenty').select('*').eq('id',id).single();if(error)return alert(error.message);const content=data.tresc?.html||`<div class="police-a4"><h2>${policeEsc(data.tytul||'')}</h2><pre>${policeEsc(JSON.stringify(data.tresc||{},null,2))}</pre></div>`;const w=window.open('','_blank','width=900,height=900');w.document.write(`<html><head><title>${policeEsc(data.numer_dokumentu||'Dokument')}</title><script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"><\/script><style>${document.querySelector('style')?.innerHTML||''}</style><style>body{background:#e9eef5;padding:20px;display:flex;flex-direction:column;align-items:center}.print-actions{margin-bottom:15px}.print-actions button{padding:10px 14px;margin-right:8px}</style></head><body><div class="print-actions"><button onclick="window.print()">Drukuj</button><button onclick="html2pdf().set({margin:[8,8,8,8],filename:'${policeEsc(data.numer_dokumentu||'dokument')}.pdf',image:{type:'jpeg',quality:.98},html2canvas:{scale:2,useCORS:true},jsPDF:{unit:'mm',format:'a4',orientation:'portrait'}}).from(document.querySelector('.police-document')).save()">PDF</button></div>${content}</body></html>`);w.document.close()}
 document.addEventListener('DOMContentLoaded',()=>setTimeout(()=>{if(document.getElementById('policeDocEditor'))policeDocRender()},700));
+
+/* === SWD POPRAWKA DOKUMENTÓW: podpis + checkboxy === */
+
+function swdOfficerNameOnly(){
+  const email = currentUser?.email || currentProfile?.email || '';
+  const name = (currentProfile?.imie_nazwisko || '').trim();
+  if(name && name !== email) return name;
+  return 'podpis funkcjonariusza';
+}
+
+function signatureBlock(label='sporządzający dokument'){
+  return `
+    <div class="swd-signature-block">
+      <div class="swd-signature-label">${label}</div>
+      <div class="swd-hand-signature">${policeEsc(swdOfficerNameOnly())}</div>
+      <div class="swd-signature-caption">(podpis funkcjonariusza)</div>
+    </div>
+  `;
+}
+
+function realCheck(label){
+  return `<div class="spb-check"><span class="box"></span><span>${label}</span></div>`;
+}
+
+function policeBind(){
+  document.querySelectorAll('.police-checkbox,.spb-check').forEach(el=>{
+    el.onclick=()=>{
+      const b=el.querySelector('.box');
+      if(b) b.classList.toggle('checked');
+    };
+  });
+  document.querySelectorAll('.crossable').forEach(el=>el.onclick=()=>el.classList.toggle('crossed'));
+  document.querySelectorAll('.yesno .pick').forEach(el=>el.onclick=()=>el.classList.toggle('selected'));
+}
+
+function templateSPB(){
+  return `<div class="spb-a4 police-document" data-doc-title="NOTATKA URZĘDOWA Z UŻYCIA / WYKORZYSTANIA ŚPB / BRONI PALNEJ">
+    <div class="spb-head"><div class="spb-head-box">Kraków, dnia ${spbLine('115px')} r.<br><br>Wydział / Jednostka:<br>${spbLine('255px')}</div></div>
+    <h2>NOTATKA URZĘDOWA</h2>
+    <div class="spb-sub">z użycia / wykorzystania ŚPB / broni palnej</div>
+
+    <div>
+      Ja, niżej podpisany ${spbFill('290px')}, w dniu ${spbLine('120px')} o godzinie ${spbLine('85px')}
+      w miejscowości ${spbLine('190px')} na ulicy ${spbLine('210px')}
+      podjąłem/am decyzję o użyciu / wykorzystaniu ŚPB / broni wobec:
+    </div>
+
+    <div class="spb-box" contenteditable="true"></div>
+
+    <div class="spb-section-title">1. Rodzaj użytego Środka</div>
+    ${realCheck('Siła fizyczna (techniki obezwładniania)')}
+    ${realCheck('Kajdanki założone na ręce z przodu / ręce z tyłu / nogi')}
+    ${realCheck('Ręczny miotacz gazu pieprzowego')}
+    <div class="spb-check"><span class="box"></span><span>Pałka służbowa (rodzaj): ${spbLine('190px')}</span></div>
+    ${realCheck('Tasery (Paralizator elektryczny)')}
+    ${realCheck('<span class="spb-red">Broń palna służbowa</span>')}
+
+    <div class="spb-section-title">2. Procedura Ostrzegawcza</div>
+    <div>Wydano polecenie zachowania zgodnego z prawem: <span class="yesno"><span class="pick">TAK</span> / <span class="pick">NIE</span></span></div>
+    <div>Ostrzeżono o użyciu ŚPB / Taserów słowami: ${spbLine('260px')}</div>
+    <br>
+    <b>Dotyczy Broni Palnej:</b>
+    <div>Okrzyknięto "POLICJA!": <span class="yesno"><span class="pick">TAK</span> / <span class="pick">NIE</span></span></div>
+    <div>Okrzyknięto "STÓJ, BO STRZELAM!": <span class="yesno"><span class="pick">TAK</span> / <span class="pick">NIE</span></span></div>
+    <div>Oddano strzał ostrzegawczy w bezpiecznym kierunku: <span class="yesno"><span class="pick">TAK</span> / <span class="pick">NIE</span></span></div>
+    <div>Odstąpiono od procedur ze względu na bezp. zagrożenie życia: <span class="yesno"><span class="pick">TAK</span> / <span class="pick">NIE</span></span></div>
+
+    <div class="spb-section-title">3. Przebieg i Skutki Zdarzenia</div>
+    <div>Ilość oddanych strzałów / użytych kartridży: ${spbLine('150px')}</div>
+    <div>Osoba doznała obrażeń ciała: <span class="yesno"><span class="pick">TAK</span> / <span class="pick">NIE</span></span></div>
+    <div>Udzielono pomocy przedmedycznej: <span class="yesno"><span class="pick">TAK</span> / <span class="pick">NIE</span> / <span class="pick">NIE BYŁO POTRZEBY</span></span></div>
+    <div>Wezwano Zespół Ratownictwa Medycznego: <span class="yesno"><span class="pick">TAK</span> / <span class="pick">NIE</span></span></div>
+
+    <div class="spb-section-title">Szczegółowy opis zachowania osoby oraz przebiegu czynności:</div>
+    <div class="spb-desc" contenteditable="true"></div>
+
+    ${signatureBlock('sporządził')}
+  </div>`;
+}
+
+function templateWniosek(){
+  return `<div class="police-a4 police-document" data-doc-title="WNIOSEK O UKARANIE" style="font-family:Arial,sans-serif;font-size:14px;padding:44px 54px">
+    <div class="police-top">
+      <div style="width:45%">
+        Pieczęć nagłówkowa jednostki /<br>Nazwa oskarżyciela publicznego:<br>
+        <span class="line-edit" contenteditable="true" style="min-width:100%;margin-top:8px"></span><br><br>
+        Znak sprawy: ${ce('130px')}
+      </div>
+      <div style="width:45%;text-align:right">
+        ${ce('120px')}, dnia ${ce('90px')} r.<br><br>
+        <b>Do Sądu Rejonowego w</b><br>${ce('180px')}<br>Wydział Karny
+      </div>
+    </div>
+
+    <h2>WNIOSEK O UKARANIE</h2>
+    <div style="text-align:center;margin-bottom:18px">
+      w postępowaniu <span class="crossable">zwyczajnym</span> / <span class="crossable">przyspieszonym</span> / <span class="crossable">nakazowym</span>
+    </div>
+
+    <div class="police-section">
+      <div class="police-section-title">I. OBWINIAM:</div>
+      <div class="police-row">Imię i nazwisko: ${ce('470px')}</div>
+      <div class="police-row">Imiona rodziców i nazwisko panieńskie matki: ${ce('315px')}</div>
+      <div class="police-row">Data i miejsce urodzenia: ${ce('410px')}</div>
+      <div class="police-row">PESEL / Numer dokumentu: ${ce('380px')}</div>
+      <div class="police-row">Miejsce zamieszkania: ${ce('420px')}</div>
+      <div class="police-row">Zatrudnienie / Zawód: ${ce('420px')}</div>
+    </div>
+
+    <div class="police-section">
+      <div class="police-section-title">II. O TO, ŻE:</div>
+      <div class="police-row">W dniu ${ce('110px')} około godziny ${ce('70px')} w miejscowości ${ce('190px')} na ulicy ${ce('140px')}</div>
+      <div class="police-area" contenteditable="true" style="min-height:120px"></div>
+      <div style="text-align:right;margin-top:8px;font-weight:bold">tj. o wykroczenie z art. ${ce('130px')}</div>
+    </div>
+
+    <div class="police-section">
+      <div class="police-section-title">III. WNOSZĘ O:</div>
+      <div><span class="police-checkbox"><span class="box"></span> wezwanie na rozprawę i przesłuchanie świadków:</span></div>
+      <div class="police-area" contenteditable="true" style="min-height:65px"></div>
+      <div><span class="police-checkbox"><span class="box"></span> odczytanie na rozprawie dokumentów wskazanych w aktach sprawy.</span></div>
+      <div><span class="police-checkbox"><span class="box"></span> orzeczenie środka karnego w postaci:</span> ${ce('300px')}</div>
+    </div>
+
+    <div class="police-section">
+      <div class="police-section-title">IV. ZAŁĄCZNIKI:</div>
+      <div class="police-row">1. Akta sprawy o sygnaturze ${ce('130px')} na ${ce('50px')} kartach.</div>
+      <div class="police-row">2. Inne załączniki: ${ce('420px')}</div>
+    </div>
+
+    ${signatureBlock('sporządzający wniosek')}
+  </div>`;
+}
