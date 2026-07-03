@@ -538,3 +538,66 @@ async function login(){
   return msg('loginMsg','Nie znaleziono konta o takim loginie.',false);
 }
 
+
+
+/* === SWD POPRAWKA: sesja PIN po odświeżeniu === */
+
+async function restorePinSession(){
+  try{
+    const saved = JSON.parse(localStorage.getItem('swd_pin_session') || 'null');
+    if(!saved?.id || !saved?.pin) return false;
+
+    const { data, error } = await supabaseClient
+      .from('profile')
+      .select('*')
+      .eq('id', saved.id)
+      .maybeSingle();
+
+    if(error || !data) {
+      localStorage.removeItem('swd_pin_session');
+      return false;
+    }
+
+    if(String(data.pin_code || '') !== String(saved.pin)){
+      localStorage.removeItem('swd_pin_session');
+      return false;
+    }
+
+    await enterProfileApp(data);
+    return true;
+  }catch(e){
+    console.error(e);
+    localStorage.removeItem('swd_pin_session');
+    return false;
+  }
+}
+
+const oldEnterProfileAppSession = typeof enterProfileApp === 'function' ? enterProfileApp : null;
+if(oldEnterProfileAppSession){
+  enterProfileApp = async function(profile){
+    localStorage.setItem('swd_pin_session', JSON.stringify({
+      id: profile.id,
+      pin: profile.pin_code
+    }));
+    return await oldEnterProfileAppSession(profile);
+  }
+}
+
+const oldLogoutSession = typeof logout === 'function' ? logout : null;
+if(oldLogoutSession){
+  logout = async function(){
+    localStorage.removeItem('swd_pin_session');
+    return await oldLogoutSession();
+  }
+}
+
+const oldInitSession = typeof init === 'function' ? init : null;
+if(oldInitSession){
+  init = async function(){
+    const restored = await restorePinSession();
+    if(restored) return;
+    return await oldInitSession();
+  }
+}
+
+init();

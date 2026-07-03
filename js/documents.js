@@ -148,3 +148,98 @@ function templateWniosek(){
     ${signatureBlock('sporządzający wniosek')}
   </div>`;
 }
+
+
+/* === SWD POPRAWKA: podpis w notatkach i PZD === */
+
+function templateNotatka(title){
+  return `<div class="police-a4 police-document" data-doc-title="${policeEsc(title)}">
+    <div class="police-top">
+      <div style="width:260px">
+        <div class="nu-line" contenteditable="true" style="width:220px"></div>
+        <div class="nu-line" contenteditable="true" style="width:220px"></div>
+      </div>
+      <div>Kraków, dn. ${ce('130px')}</div>
+    </div>
+    <h2>${policeEsc(title)}</h2>
+    ${Array.from({length:27}).map(longLine).join('')}
+    ${signatureBlock('sporządził')}
+  </div>`;
+}
+
+function templatePZD(){
+  const pesel=Array.from({length:11}).map(()=>`<span contenteditable="true"></span>`).join('');
+  return `<div class="pzd-a4 police-document" data-doc-title="POKWITOWANIE ZATRZYMANIA DOKUMENTU">
+    <div style="text-align:center;margin-bottom:5px">strona 1</div>
+    <div class="pzd-doc">
+      <div class="pzd-section">
+        <div class="pzd-top">
+          <div style="text-align:center">miejsce na pieczęć<br>nagłówkową jednostki</div>
+          <div>seria AAA numer 0000000</div>
+        </div>
+        <div class="pzd-title">POKWITOWANIE<br>ZATRZYMANIA DOKUMENTU</div>
+        <div class="pzd-row"><span>w dniu:</span><span class="pzd-input" contenteditable="true" style="max-width:50px"></span><span>20</span><span class="pzd-input" contenteditable="true" style="max-width:24px"></span><span>r. o godz.</span><span class="pzd-input" contenteditable="true" style="max-width:60px"></span><span style="margin-left:20px">w miejscowości</span><span class="pzd-input" contenteditable="true"></span></div>
+        <div class="pzd-row"><span>wydane przez</span><span class="pzd-input" contenteditable="true">${policeEsc(swdOfficerFull ? swdOfficerFull() : '')}</span><span>w zamian za:</span></div>
+        <div class="pzd-sub">(stopień, imię i nazwisko)</div>
+      </div>
+
+      <div class="pzd-section">
+        <div class="pzd-checks">
+          <span class="police-checkbox"><span class="box"></span> dowód rejestracyjny</span>
+          <span class="police-checkbox"><span class="box"></span> pozwolenie czasowe</span>
+          <span class="police-checkbox"><span class="box"></span> profesjonalny dowód rejestracyjny</span>
+        </div>
+        <div class="pzd-row"><span>pojazdu marki</span><span class="pzd-input" contenteditable="true"></span><span style="margin-left:10px">numer rejestracyjny</span><span class="pzd-input" contenteditable="true"></span></div>
+        <div class="pzd-row"><span>VIN albo numer nadwozia, podwozia lub ramy</span><span class="pzd-input" contenteditable="true"></span></div>
+        <div class="pzd-row"><span>Właściciel albo posiadacz pojazdu</span><span class="pzd-input" contenteditable="true"></span></div>
+        <div class="pzd-row"><span>Kierujący pojazdem</span><span class="pzd-input" contenteditable="true"></span><div class="pzd-pesel">${pesel}</div></div>
+        <div class="pzd-sub" style="text-align:left">(imię i nazwisko, numer PESEL)</div>
+        <div class="pzd-row"><span class="pzd-input" contenteditable="true" style="width:100%"></span></div>
+      </div>
+
+      <div class="pzd-section">
+        <div class="pzd-checks">
+          <span class="police-checkbox"><span class="box"></span> prawo jazdy kategorii</span>
+          <span class="pzd-input" contenteditable="true" style="max-width:50px"></span>
+          <span class="police-checkbox"><span class="box"></span> pozwolenie na kierowanie tramwajem</span>
+          <span class="police-checkbox"><span class="box"></span> karta kierowcy</span>
+        </div>
+        <div class="pzd-row"><span>Imię, nazwisko i adres posiadacza</span><span class="pzd-input" contenteditable="true"></span></div>
+        <div class="pzd-row"><span>Seria i nr dokumentu</span><span class="pzd-input" contenteditable="true"></span><span style="margin-left:20px">Organ wydający dokument:</span><span class="pzd-input" contenteditable="true"></span></div>
+        <div class="pzd-row"><span class="pzd-input" contenteditable="true" style="width:100%"></span></div>
+      </div>
+
+      <div class="pzd-section">
+        <div class="pzd-row"><span>Powód zatrzymania:</span><span class="pzd-input" contenteditable="true"></span></div>
+        <div class="pzd-row"><span class="pzd-input" contenteditable="true" style="width:100%"></span></div>
+      </div>
+
+      <div class="pzd-section">
+        <b>Pokwitowanie:</b>
+        <div class="pzd-row">
+          <div>
+            <div><span class="police-checkbox"><span class="box"></span> zezwala na używanie pojazdu</span></div>
+            <div><span class="police-checkbox"><span class="box"></span> uprawnia do kierowania pojazdem</span></div>
+          </div>
+          <div style="margin-left:auto">do dnia <span class="pzd-input" contenteditable="true" style="display:inline-block;min-width:80px"></span> 20 <span class="pzd-input" contenteditable="true" style="display:inline-block;min-width:30px"></span> r. do godz. <span class="pzd-input" contenteditable="true" style="display:inline-block;min-width:60px"></span></div>
+        </div>
+        <div class="pzd-row"><span>Warunki używania pojazdu:</span><span class="pzd-input" contenteditable="true"></span></div>
+        <div class="pzd-row"><span class="pzd-input" contenteditable="true" style="width:100%"></span></div>
+      </div>
+
+      <div class="pzd-section">
+        <b><u>Skierowanie / wniosek o skierowanie pojazdu na dodatkowe badanie techniczne pojazdu z powodu:</u></b>
+        <div class="pzd-row"><span class="pzd-input" contenteditable="true" style="width:100%"></span></div>
+        <div class="pzd-row"><span class="pzd-input" contenteditable="true" style="width:100%"></span></div>
+        <div class="pzd-signatures">
+          <div class="pzd-sign pzd-sign-hand">
+            <div class="swd-hand-signature pzd-hand">${policeEsc(swdOfficerNameOnly())}</div>
+            <div>(podpis wydającego pokwitowanie)</div>
+          </div>
+          <div class="pzd-sign">(podpis odbierającego pokwitowanie)</div>
+        </div>
+        <div class="pzd-foot">*) Wpisać imię i nazwisko lub nazwę podmiotu.<br>**) Jeżeli kierujący nie ma numeru PESEL, wpisać nazwę i numer dokumentu.<br>***) Niepotrzebne skreślić.</div>
+      </div>
+    </div>
+  </div>`;
+}
