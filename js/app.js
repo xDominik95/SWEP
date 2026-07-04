@@ -159,7 +159,7 @@ function officerDisplay(profile){
   return 'Uzupełnij dane funkcjonariusza';
 }
 
-let rankRatesCache = [];
+
 
 async function loadRankRates(){
   const {data,error}=await supabaseClient.from('stopnie_stawki').select('*').order('kolejnosc',{ascending:true});
@@ -509,4 +509,5 @@ async function saveOfficerProfile(id){
   await loadProfiles();
   alert('Zapisano zmiany.');
 }
+
 init();
