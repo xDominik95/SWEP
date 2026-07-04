@@ -83,3 +83,115 @@ function renderPojazdyLista(){
  ${list.map(v=>`<tr><td>${vehicleStatusBadge(v.status)}</td><td><b>${escapeHtml(vehicleCleanKrypton(v.krypton))}</b></td><td>${escapeHtml((v.marka||'')+' '+(v.model||''))}</td><td>${escapeHtml(v.numer_rejestracyjny||'')}</td><td>${Number(v.aktualny_przebieg||0).toLocaleString('pl-PL')} km</td><td>${Number(v.aktualne_paliwo||0)}%</td><td><button class="btn-light" onclick="openVehicleDetails(${v.id})">Szczegóły</button> ${vehicleRoleCanViewHistory()?`<button class="btn-light" onclick="openVehicleHistory(${v.id})">Historia</button>`:''}</td></tr>`).join('')||'<tr><td colspan="7">Brak pojazdów.</td></tr>'}
  </tbody></table></div>`;
 }
+
+/* SWD - POPRAWKA v4: działające przyciski Szczegóły / Historia */
+window.openVehicleDetails = async function(id){
+  const {data:v,error}=await supabaseClient.from('pojazdy').select('*').eq('id',id).single();
+  if(error)return alert(error.message);
+  document.getElementById('vehicleDetailsModal')?.remove();
+  document.body.insertAdjacentHTML('beforeend',`
+    <div class="vehicle-modal-backdrop" id="vehicleDetailsModal">
+      <div class="vehicle-modal">
+        <div class="vehicle-modal-head">
+          <h3>Szczegóły pojazdu</h3>
+          <button type="button" class="btn-light" onclick="closeVehicleModal('vehicleDetailsModal')">Zamknij</button>
+        </div>
+        <div class="vehicle-details-grid">
+          <div><small>Marka</small><b>${escapeHtml(v.marka||'-')}</b></div>
+          <div><small>Model</small><b>${escapeHtml(v.model||'-')}</b></div>
+          <div><small>Kryptonim</small><b>${escapeHtml(vehicleCleanKrypton(v.krypton))}</b></div>
+          <div><small>Numer rejestracyjny</small><b>${escapeHtml(v.numer_rejestracyjny||'-')}</b></div>
+          <div><small>Aktualny przebieg</small><b>${Number(v.aktualny_przebieg||0).toLocaleString('pl-PL')} km</b></div>
+          <div><small>Poziom paliwa</small><b>${Number(v.aktualne_paliwo||0)}%</b></div>
+        </div>
+        <div class="action-row">
+          ${vehicleRoleCanViewHistory()?`<button type="button" class="btn-primary" onclick="openVehicleHistory(${v.id})">📋 Historia pobrań</button>`:''}
+        </div>
+      </div>
+    </div>
+  `);
+};
+
+window.openVehicleHistory = async function(id){
+  if(!vehicleRoleCanViewHistory())return alert('Historię może sprawdzić tylko dowódca, zastępca lub administrator.');
+  const {data:v,error:ve}=await supabaseClient.from('pojazdy').select('*').eq('id',id).single();
+  if(ve)return alert(ve.message);
+  const {data,error}=await supabaseClient.from('karty_pojazdow').select('*').eq('pojazd_id',id).order('created_at',{ascending:false}).limit(200);
+  if(error)return alert(error.message);
+  document.getElementById('vehicleHistoryModal')?.remove();
+  const rows=(data||[]).map(k=>`
+    <tr class="vehicle-history-row" onclick="openVehicleHistoryEntry(${k.id})">
+      <td>${escapeHtml(k.rozpoczecie_data||String(k.created_at||'').slice(0,10)||'-')}</td>
+      <td>${escapeHtml(k.rozpoczecie_pobierajacy||k.created_by||'-')}</td>
+      <td>${escapeHtml(k.rozpoczecie_godzina||'-')}</td>
+      <td>${escapeHtml(k.zakonczenie_godzina||'-')}</td>
+      <td>${Number(k.rozpoczecie_przebieg||0).toLocaleString('pl-PL')}</td>
+      <td>${k.zakonczenie_przebieg?Number(k.zakonczenie_przebieg).toLocaleString('pl-PL'):'-'}</td>
+      <td>${escapeHtml(k.status||'')}</td>
+    </tr>
+  `).join('');
+  document.body.insertAdjacentHTML('beforeend',`
+    <div class="vehicle-modal-backdrop" id="vehicleHistoryModal">
+      <div class="vehicle-modal vehicle-modal-wide">
+        <div class="vehicle-modal-head">
+          <h3>Historia pobrań — ${escapeHtml((v.marka||'')+' '+(v.model||''))} | ${escapeHtml(vehicleCleanKrypton(v.krypton))}</h3>
+          <button type="button" class="btn-light" onclick="closeVehicleModal('vehicleHistoryModal')">Zamknij</button>
+        </div>
+        <div class="vehicle-table-wrap">
+          <table class="vehicle-table">
+            <thead><tr><th>Data</th><th>Funkcjonariusz</th><th>Pobranie</th><th>Zdanie</th><th>Przebieg start</th><th>Przebieg koniec</th><th>Status</th></tr></thead>
+            <tbody>${rows||'<tr><td colspan="7">Brak historii pobrań.</td></tr>'}</tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  `);
+};
+
+window.openVehicleHistoryEntry = async function(id){
+  const {data:k,error}=await supabaseClient.from('karty_pojazdow').select('*').eq('id',id).single();
+  if(error)return alert(error.message);
+  document.getElementById('vehicleHistoryEntryModal')?.remove();
+  document.body.insertAdjacentHTML('beforeend',`
+    <div class="vehicle-modal-backdrop" id="vehicleHistoryEntryModal">
+      <div class="vehicle-modal">
+        <div class="vehicle-modal-head">
+          <h3>Szczegóły pobrania</h3>
+          <button type="button" class="btn-light" onclick="closeVehicleModal('vehicleHistoryEntryModal')">Zamknij</button>
+        </div>
+        <div class="vehicle-details-grid">
+          <div><small>Pojazd</small><b>${escapeHtml(k.pojazd||'-')}</b></div>
+          <div><small>Kryptonim</small><b>${escapeHtml(vehicleCleanKrypton(k.krypton))}</b></div>
+          <div><small>Pobrał</small><b>${escapeHtml(k.rozpoczecie_pobierajacy||k.created_by||'-')}</b></div>
+          <div><small>Data</small><b>${escapeHtml(k.rozpoczecie_data||'-')}</b></div>
+          <div><small>Godzina pobrania</small><b>${escapeHtml(k.rozpoczecie_godzina||'-')}</b></div>
+          <div><small>Godzina zdania</small><b>${escapeHtml(k.zakonczenie_godzina||'-')}</b></div>
+          <div><small>Przebieg start</small><b>${Number(k.rozpoczecie_przebieg||0).toLocaleString('pl-PL')} km</b></div>
+          <div><small>Przebieg koniec</small><b>${k.zakonczenie_przebieg?Number(k.zakonczenie_przebieg).toLocaleString('pl-PL')+' km':'-'}</b></div>
+          <div><small>Paliwo przy pobraniu</small><b>${Number(k.rozpoczecie_paliwo||0)}%</b></div>
+          <div><small>Paliwo przy zdaniu</small><b>${k.zakonczenie_paliwo!==null&&k.zakonczenie_paliwo!==undefined?Number(k.zakonczenie_paliwo)+'%':'-'}</b></div>
+          <div><small>Uszkodzenia</small><b>${k.uszkodzenia?'Tak':'Nie'}</b></div>
+          <div><small>Status</small><b>${escapeHtml(k.status||'-')}</b></div>
+        </div>
+        <div class="vehicle-history-note"><b>Uwagi przy pobraniu:</b><br>${escapeHtml(k.uwagi_pobrania||'-')}</div>
+        <div class="vehicle-history-note"><b>Uwagi przy zwrocie:</b><br>${escapeHtml(k.uwagi_zwrotu||'-')}</div>
+        <div class="vehicle-history-note"><b>Uwagi uszkodzeń:</b><br>${escapeHtml(k.uwagi_uszkodzenia||'-')}</div>
+      </div>
+    </div>
+  `);
+};
+
+window.closeVehicleModal = function(id){
+  document.getElementById(id)?.remove();
+};
+
+function renderPojazdyLista(){
+ const box=document.getElementById('pojazdyLista');if(!box)return;
+ const search=ensureVehicleSearchBox();
+ let list=[...(window.pojazdyLista||[])].sort((a,b)=>vehicleStatusOrder(a.status)-vehicleStatusOrder(b.status)||vehicleCleanKrypton(a.krypton).localeCompare(vehicleCleanKrypton(b.krypton),'pl',{numeric:true}));
+ const q=(search?.value||'').toLowerCase();
+ if(q)list=list.filter(v=>`${v.marka||''} ${v.model||''} ${v.krypton||''} ${v.numer_rejestracyjny||''} ${v.status||''}`.toLowerCase().includes(q));
+ box.innerHTML=`<div class="vehicle-table-wrap vehicle-table-centered"><table class="vehicle-table"><thead><tr><th>Status</th><th>Kryptonim</th><th>Pojazd</th><th>Nr rej.</th><th>Przebieg</th><th>Paliwo</th><th>Akcja</th></tr></thead><tbody>
+ ${list.map(v=>`<tr><td>${vehicleStatusBadge(v.status)}</td><td><b>${escapeHtml(vehicleCleanKrypton(v.krypton))}</b></td><td>${escapeHtml((v.marka||'')+' '+(v.model||''))}</td><td>${escapeHtml(v.numer_rejestracyjny||'')}</td><td>${Number(v.aktualny_przebieg||0).toLocaleString('pl-PL')} km</td><td>${Number(v.aktualne_paliwo||0)}%</td><td><button type="button" class="btn-light" onclick="openVehicleDetails(${v.id})">Szczegóły</button> ${vehicleRoleCanViewHistory()?`<button type="button" class="btn-light" onclick="openVehicleHistory(${v.id})">Historia</button>`:''}</td></tr>`).join('')||'<tr><td colspan="7">Brak pojazdów.</td></tr>'}
+ </tbody></table></div>`;
+}
