@@ -204,3 +204,119 @@ if(typeof showPage === 'function' && !window._swdCostsShowPagePatched){
     }
   }
 }
+
+/* SWD - koszty: wybór pojazdu po numerze rejestracyjnym */
+let costVehiclesCache = [];
+
+async function loadCostVehicles(){
+  const select=document.getElementById('costPlate');
+  if(!select)return;
+
+  const selected=select.value;
+
+  const {data,error}=await supabaseClient
+    .from('pojazdy')
+    .select('*')
+    .order('numer_rejestracyjny',{ascending:true});
+
+  if(error){
+    console.error(error);
+    return;
+  }
+
+  costVehiclesCache=data||[];
+
+  select.innerHTML='<option value="">Wybierz numer rejestracyjny...</option>' + costVehiclesCache.map(v=>{
+    const label=`${v.numer_rejestracyjny || '-'} | ${v.marka || ''} ${v.model || ''} | ${vehicleCostCleanKrypton(v.krypton)}`;
+    return `<option value="${v.numer_rejestracyjny}">${label}</option>`;
+  }).join('');
+
+  if(selected)select.value=selected;
+}
+
+function vehicleCostCleanKrypton(k){
+  return String(k || '').replace(/^OPP[\s\-_/]*/i,'').trim();
+}
+
+function fillCostVehicleData(){
+  const plate=document.getElementById('costPlate')?.value || '';
+  const v=costVehiclesCache.find(x=>String(x.numer_rejestracyjny||'')===String(plate));
+
+  const vehicle=document.getElementById('costVehicle');
+  const info=document.getElementById('costVehicleInfo');
+
+  if(!v){
+    if(vehicle)vehicle.value='';
+    if(info)info.innerHTML='';
+    return;
+  }
+
+  if(vehicle)vehicle.value=`${v.marka || ''} ${v.model || ''}`.trim();
+
+  if(info){
+    info.innerHTML=`
+      <b>Kryptonim:</b> ${vehicleCostCleanKrypton(v.krypton) || '-'} |
+      <b>Przebieg:</b> ${Number(v.aktualny_przebieg || 0).toLocaleString('pl-PL')} km |
+      <b>Paliwo:</b> ${Number(v.aktualne_paliwo || 0)}%
+    `;
+  }
+}
+
+/* Nadpisanie modułu kosztów z auto-uzupełnianiem pojazdu */
+const oldLoadCostsModuleAutofill = typeof loadCostsModule === 'function' ? loadCostsModule : null;
+loadCostsModule = async function(){
+  const d=document.getElementById('costDate');
+  if(d && !d.value)d.value=todayCostDate();
+
+  await loadCostVehicles();
+
+  if(typeof loadMyCosts === 'function')await loadMyCosts();
+  if(costCanManage()){
+    if(typeof loadPendingCosts === 'function')await loadPendingCosts();
+    if(typeof loadAllCosts === 'function')await loadAllCosts();
+  }
+}
+
+submitCostRequest = async function(){
+  if(!currentProfile)return;
+
+  const data=document.getElementById('costDate').value;
+  const rejestracja=document.getElementById('costPlate').value.trim();
+  const vehicleObj=costVehiclesCache.find(x=>String(x.numer_rejestracyjny||'')===String(rejestracja));
+  const pojazd=document.getElementById('costVehicle').value.trim();
+  const kwota=Number(document.getElementById('costAmount').value || 0);
+  const opis=document.getElementById('costDescription').value.trim();
+
+  if(!data || !rejestracja || !pojazd || !kwota || !opis){
+    return costMsg('Uzupełnij datę, wybierz numer rejestracyjny, wpisz kwotę i opis.',false);
+  }
+
+  const row={
+    funkcjonariusz_id:currentProfile.id,
+    funkcjonariusz:currentProfile.imie_nazwisko || currentProfile.login_name,
+    stopien:currentProfile.stopien || '',
+    numer_sluzbowy:currentProfile.numer_sluzbowy || '',
+    data_kosztu:data,
+    pojazd,
+    numer_rejestracyjny:rejestracja,
+    krypton: vehicleObj ? vehicleCostCleanKrypton(vehicleObj.krypton) : '',
+    przebieg: vehicleObj ? Number(vehicleObj.aktualny_przebieg || 0) : null,
+    kwota,
+    opis,
+    status:'oczekuje'
+  };
+
+  const {error}=await supabaseClient.from('koszty').insert(row);
+  if(error)return costMsg(error.message,false);
+
+  costMsg('Koszt wysłany do rozpatrzenia.',true);
+
+  document.getElementById('costPlate').value='';
+  document.getElementById('costVehicle').value='';
+  document.getElementById('costAmount').value='';
+  document.getElementById('costDescription').value='';
+  const info=document.getElementById('costVehicleInfo');
+  if(info)info.innerHTML='';
+
+  await loadCostsModule();
+}

@@ -1,20 +1,17 @@
-SWD - dodatkowe koszty funkcjonariuszy
+SWD - koszty: auto-uzupełnianie pojazdu
 
-Dodane:
-- zakładka Koszty,
-- formularz: data, marka/model pojazdu, numer rejestracyjny, kwota, opis,
-- funkcjonariusz wysyła koszt do rozpatrzenia,
-- dowódca/zastępca/admin akceptuje albo odrzuca,
-- po akceptacji kwota dopisuje się do wypłaty funkcjonariusza jako wpis w tabeli sluzby z 0 godzin i kwotą kosztu.
+Zmiany:
+- w formularzu kosztów numer rejestracyjny jest listą wyboru z tabeli pojazdy,
+- po wyborze rejestracji system sam uzupełnia markę i model,
+- pokazuje też kryptonim, przebieg i paliwo,
+- funkcjonariusz wpisuje tylko datę, pojazd z listy, kwotę i opis.
 
 Najpierw uruchom SQL:
-sql/swd-koszty.sql
+sql/swd-koszty-auto-pojazd.sql
 
 Podmień:
 - index.html
 - style.css
-
-Dodaj:
 - js/costs.js
 
 Nie podmieniaj:

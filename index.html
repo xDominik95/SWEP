@@ -62,7 +62,7 @@
       <button class="nav commander-only hidden" onclick="showPage('trash', this)">🗑️ Kosz</button>
       <button class="nav commander-only hidden" onclick="showPage('settings', this)">⚙️ Ustawienia</button>
       <button class="nav" onclick="logout()">🚪 Wyloguj</button>
-      <div class="version">SWD v2.0<br></div>
+      <div class="version">SWD v2.0<br>System testowy</div>
     </aside>
 
     <main class="main">
@@ -231,10 +231,14 @@
 
           <div class="grid-4">
             <input id="costDate" type="date">
-            <input id="costVehicle" placeholder="Marka i model pojazdu">
-            <input id="costPlate" placeholder="Numer rejestracyjny">
+            <select id="costPlate" onchange="fillCostVehicleData()">
+              <option value="">Wybierz numer rejestracyjny...</option>
+            </select>
+            <input id="costVehicle" placeholder="Marka i model pojazdu" readonly>
             <input id="costAmount" type="number" placeholder="Kwota">
           </div>
+
+          <div id="costVehicleInfo" class="cost-vehicle-info"></div>
 
           <textarea id="costDescription" rows="4" placeholder="Opis kosztu, np. naprawa radiowozu, wymiana opony, holowanie itd."></textarea>
 
