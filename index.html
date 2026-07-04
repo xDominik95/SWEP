@@ -61,10 +61,7 @@
       <button class="nav commander-only hidden" onclick="showPage('trash', this)">🗑️ Kosz</button>
       <button class="nav commander-only hidden" onclick="showPage('settings', this)">⚙️ Ustawienia</button>
       <button class="nav" onclick="logout()">🚪 Wyloguj</button>
-      <div class="login-version">
-    <div class="sidebar-footer">
-    
-</div>
+      <div class="version">SWD v2.0<br>System testowy</div>
     </aside>
 
     <main class="main">
@@ -185,47 +182,41 @@
 
       <section id="hours" class="page hidden">
         <div class="panel">
-          <h3>Rozliczenie godzin</h3>
-          <p>Wpisz rozpoczęcie i zakończenie służby. System sam policzy czas i kwotę według stawki.</p>
-          <div class="grid-4">
-            <input id="serviceDate" type="date">
-            <input id="serviceStart" type="time">
-            <input id="serviceEnd" type="time">
-            <input id="serviceNote" placeholder="Uwagi / opis służby">
+          <div class="section-head">
+            <div><h3>Służba</h3><p>Godziny liczone automatycznie od rozpoczęcia do zakończenia służby.</p></div>
+            <button class="btn-light" onclick="loadHoursModule()">Odśwież</button>
           </div>
+          <div id="activeServiceBox" class="service-active-box"></div>
           <div class="action-row">
-            <button class="btn-primary" onclick="addServiceHours()">Zapisz służbę</button>
+            <button id="startServiceBtn" class="btn-primary" onclick="startServiceDuty()">🟢 Rozpocznij służbę</button>
+            <button id="endServiceBtn" class="btn-danger hidden" onclick="endServiceDuty()">🔴 Zakończ służbę</button>
           </div>
           <div id="hoursMsg" class="msg"></div>
         </div>
-
         <div class="stats">
           <div class="stat"><span>⏱️</span><b id="hoursTotal">0</b><small>Godziny ogółem</small></div>
           <div class="stat"><span>🧾</span><b id="hoursPeriod">0</b><small>Godziny od ostatniej wypłaty</small></div>
           <div class="stat"><span>💵</span><b id="moneyPeriod">0</b><small>Kwota od ostatniej wypłaty</small></div>
+          <div class="stat"><span>🏦</span><b id="bankAccountBox">-</b><small>Numer konta</small></div>
         </div>
-
-        <div class="panel commander-only hidden">
-          <h3>Reset godzin od wypłaty</h3>
-          <button class="btn-danger" onclick="resetMyPayPeriod()">Resetuj moje godziny od wypłaty</button>
-        </div>
-
-        <div class="panel commander-only hidden">
-          <div class="section-head">
-            <div>
-              <h3>Statystyki funkcjonariuszy</h3>
-              <p>Podgląd godzin i wypłat wszystkich funkcjonariuszy.</p>
-            </div>
-            <button class="btn-light" onclick="loadAllHoursStats()">Odśwież</button>
-          </div>
-          <div id="allHoursStats" class="list"></div>
-        </div>
-
         <div class="panel">
-          <h3>Moje służby</h3>
-          <div id="myHoursList" class="list"></div>
+          <h3>Mój wniosek urlopowy</h3>
+          <div class="grid-4">
+            <select id="leaveType"><option>Urlop wypoczynkowy</option><option>Urlop okolicznościowy</option><option>Nieobecność</option><option>Zwolnienie lekarskie</option><option>Delegacja</option></select>
+            <input id="leaveFrom" type="date">
+            <input id="leaveTo" type="date">
+            <input id="leaveReason" placeholder="Powód / opis">
+          </div>
+          <div class="action-row"><button class="btn-primary" onclick="submitLeaveRequest()">Złóż wniosek urlopowy</button></div>
+          <div id="leaveMsg" class="msg"></div>
         </div>
+        <div class="panel"><h3>Moje służby</h3><div id="myHoursList" class="list"></div></div>
+        <div class="panel"><h3>Moje urlopy</h3><div id="myLeavesList" class="list"></div></div>
+        <div class="panel commander-only hidden"><div class="section-head"><div><h3>Służby do zatwierdzenia</h3><p>Nieukończone i podejrzane służby.</p></div><button class="btn-light" onclick="loadPendingServices()">Odśwież</button></div><div id="pendingServicesList" class="list"></div></div>
+        <div class="panel commander-only hidden"><div class="section-head"><div><h3>Wnioski urlopowe</h3><p>Akceptacja urlopów.</p></div><button class="btn-light" onclick="loadLeaveRequests()">Odśwież</button></div><div id="leaveRequestsList" class="list"></div></div>
+        <div class="panel commander-only hidden"><div class="section-head"><div><h3>Statystyki funkcjonariuszy</h3><p>Status i rozliczenie godzin.</p></div><button class="btn-light" onclick="loadAllHoursStats()">Odśwież</button></div><div id="allHoursStats" class="list"></div></div>
       </section>
+      <div id="unfinishedServiceModal" class="modal hidden"><div class="modal-card"><h3>Nie zakończyłeś poprzedniej służby</h3><p>Wpisz godzinę zakończenia i wyjaśnienie. Wpis trafi do dowódcy/zastępcy.</p><input id="unfinishedServiceId" type="hidden"><label>Godzina zakończenia</label><input id="unfinishedEndTime" type="time"><label>Wyjaśnienie</label><textarea id="unfinishedExplanation" rows="4" placeholder="Wyjaśnienie"></textarea><div class="action-row"><button class="btn-primary" onclick="submitUnfinishedService()">Wyślij do zatwierdzenia</button></div><div id="unfinishedMsg" class="msg"></div></div></div>
 
       <section id="users" class="page hidden">
         <div class="panel commander-only hidden">
@@ -237,7 +228,6 @@
               <option value="">Wybierz stopień</option>
             </select>
             <input id="newOfficerBadge" placeholder="Numer służbowy">
-            <input id="newOfficerSignature" placeholder="Podpis na dokumentach">
 <select id="newOfficerRole">
               <option value="funkcjonariusz">funkcjonariusz</option>
               <option value="zastepca">zastepca</option>
