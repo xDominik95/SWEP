@@ -16,11 +16,11 @@
       <p>Komenda Miejska Policji w Krakowie</p>
       <label>Email lub imię-nazwisko</label>
       <input id="loginEmail" type="text" placeholder="np. jan-kowalski lub email" />
-      <label>Hasło</label>
-      <input id="loginPassword" type="password" placeholder="Hasło" />
+      <label>PIN / Hasło</label>
+      <input id="loginPassword" type="password" placeholder="4-cyfrowy PIN lub hasło" />
       <div class="auth-actions">
         <button onclick="login()" class="btn-primary">Zaloguj się</button>
-        <button onclick="showRegisterView()" class="btn-light">Utwórz konto</button>
+        
       </div>
       <div id="loginMsg" class="msg"></div>
     </div>
@@ -33,7 +33,7 @@
       <p>Konto otrzyma rolę funkcjonariusza. Dane służbowe uzupełnia administrator.</p>
       <label>Email</label>
       <input id="registerEmail" type="email" placeholder="email@przyklad.pl" />
-      <label>Hasło</label>
+      <label>PIN / Hasło</label>
       <input id="registerPassword" type="password" placeholder="Minimum 6 znaków" />
       <label>Powtórz hasło</label>
       <input id="registerPassword2" type="password" placeholder="Powtórz hasło" />
@@ -54,6 +54,7 @@
       <button class="nav active" onclick="showPage('dashboard', this)">🏠 Pulpit</button>
       <button class="nav" onclick="showPage('vehicles', this)">🚓 Pojazdy</button>
       <button class="nav" onclick="showPage('documents', this)">📄 Dokumenty</button>
+      <button class="nav" onclick="showPage('hours', this)">⏱️ Godziny służby</button>
       <button class="nav commander-only hidden" onclick="showPage('users', this)">👮 Funkcjonariusze</button>
       <button class="nav commander-only hidden" onclick="showPage('archive', this)">📁 Archiwum</button>
       <button class="nav commander-only hidden" onclick="showPage('activity', this)">📊 Aktywność</button>
@@ -179,11 +180,104 @@
         <div class="panel"><div class="section-head"><div><h3>Moje dokumenty</h3><p>Dokumenty zapisane przez Ciebie.</p></div><button class="btn-light" onclick="policeDocLoadMine()">Odśwież</button></div><div id="myDocsList" class="list"></div></div>
       </section>
 
-      <section id="users" class="page hidden"><div class="panel"><h3>Funkcjonariusze</h3><p>Edycja danych odbywa się na razie w tabeli <b>profile</b> w Supabase.</p><div id="profilesList" class="list"></div></div></section>
+      <section id="hours" class="page hidden">
+        <div class="panel">
+          <h3>Rozliczenie godzin</h3>
+          <p>Wpisz rozpoczęcie i zakończenie służby. System sam policzy czas i kwotę według stawki.</p>
+          <div class="grid-4">
+            <input id="serviceDate" type="date">
+            <input id="serviceStart" type="time">
+            <input id="serviceEnd" type="time">
+            <input id="serviceNote" placeholder="Uwagi / opis służby">
+          </div>
+          <div class="action-row">
+            <button class="btn-primary" onclick="addServiceHours()">Zapisz służbę</button>
+          </div>
+          <div id="hoursMsg" class="msg"></div>
+        </div>
+
+        <div class="stats">
+          <div class="stat"><span>⏱️</span><b id="hoursTotal">0</b><small>Godziny ogółem</small></div>
+          <div class="stat"><span>🧾</span><b id="hoursPeriod">0</b><small>Godziny od ostatniej wypłaty</small></div>
+          <div class="stat"><span>💵</span><b id="moneyPeriod">0</b><small>Kwota od ostatniej wypłaty</small></div>
+        </div>
+
+        <div class="panel commander-only hidden">
+          <h3>Reset godzin od wypłaty</h3>
+          <button class="btn-danger" onclick="resetMyPayPeriod()">Resetuj moje godziny od wypłaty</button>
+        </div>
+
+        <div class="panel commander-only hidden">
+          <div class="section-head">
+            <div>
+              <h3>Statystyki funkcjonariuszy</h3>
+              <p>Podgląd godzin i wypłat wszystkich funkcjonariuszy.</p>
+            </div>
+            <button class="btn-light" onclick="loadAllHoursStats()">Odśwież</button>
+          </div>
+          <div id="allHoursStats" class="list"></div>
+        </div>
+
+        <div class="panel">
+          <h3>Moje służby</h3>
+          <div id="myHoursList" class="list"></div>
+        </div>
+      </section>
+
+      <section id="users" class="page hidden">
+        <div class="panel commander-only hidden">
+          <h3>Utwórz konto funkcjonariusza</h3>
+          <p>Dowódca wpisuje dane, a system generuje login i 4-cyfrowy PIN.</p>
+          <div class="grid-4">
+            <input id="newOfficerName" placeholder="Imię i nazwisko">
+            <select id="newOfficerRank" onchange="applyRankRateToNewOfficer()">
+              <option value="">Wybierz stopień</option>
+            </select>
+            <input id="newOfficerBadge" placeholder="Numer służbowy">
+<select id="newOfficerRole">
+              <option value="funkcjonariusz">funkcjonariusz</option>
+              <option value="zastepca">zastepca</option>
+              <option value="dowodca">dowodca</option>
+              <option value="admin">admin</option>
+            </select>
+          </div>
+          <div class="action-row">
+            <button class="btn-primary" onclick="createOfficerAccount()">Utwórz konto i PIN</button>
+          </div>
+          <div id="newOfficerMsg" class="msg"></div>
+        </div>
+
+        <div class="panel commander-only hidden">
+          <div class="section-head">
+            <div>
+              <h3>Funkcjonariusze</h3>
+              <p>Edycja kont, ról, stopni, numerów służbowych i stawek.</p>
+            </div>
+            <button class="btn-light" onclick="loadProfiles()">Odśwież</button>
+          </div>
+          <div id="profilesList" class="list"></div>
+        </div>
+      </section>
       <section id="archive" class="page hidden"><div class="panel"><div class="section-head"><div><h3>Archiwum dokumentów</h3><p>Wyszukiwanie zapisanych dokumentów.</p></div><button class="btn-light" onclick="loadArchive()">Odśwież</button></div><input id="archiveSearch" placeholder="Szukaj..." oninput="loadArchive()" /><div id="archiveList" class="list"></div></div></section>
       <section id="activity" class="page hidden"><div class="panel"><h3>Aktywność</h3><div id="activityList" class="list"></div></div></section>
       <section id="trash" class="page hidden"><div class="panel"><h3>Kosz</h3><div id="trashList" class="list"></div></div></section>
-      <section id="settings" class="page hidden"><div class="panel"><h3>Ustawienia</h3><div id="numberingSettings" class="list"></div></div></section>
+      <section id="settings" class="page hidden">
+        <div class="panel commander-only hidden">
+          <div class="section-head">
+            <div>
+              <h3>Stopnie i stawki</h3>
+              <p>Lista stopni służbowych oraz przypisane kwoty.</p>
+            </div>
+            <button class="btn-light" onclick="loadRankRates()">Odśwież</button>
+          </div>
+          <div id="rankRatesList" class="list"></div>
+        </div>
+
+        <div class="panel commander-only hidden">
+          <h3>Numeracja dokumentów</h3>
+          <div id="numberingSettings" class="list"></div>
+        </div>
+      </section>
     </main>
   </div>
 
@@ -191,5 +285,6 @@
   <script src="js/app.js"></script>
   <script src="js/vehicles.js"></script>
   <script src="js/documents.js"></script>
+  <script src="js/hours.js"></script>
 </body>
 </html>
