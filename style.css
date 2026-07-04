@@ -265,3 +265,13 @@
 }
 
 .vehicle-history-row{cursor:pointer}.vehicle-history-row:hover{background:#eaf2ff!important}
+
+/* SWD - akcje pojazdów */
+.vehicle-actions{
+  display:flex;
+  flex-wrap:wrap;
+  gap:6px;
+}
+.vehicle-actions button{
+  white-space:nowrap;
+}

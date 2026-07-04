@@ -195,3 +195,82 @@ function renderPojazdyLista(){
  ${list.map(v=>`<tr><td>${vehicleStatusBadge(v.status)}</td><td><b>${escapeHtml(vehicleCleanKrypton(v.krypton))}</b></td><td>${escapeHtml((v.marka||'')+' '+(v.model||''))}</td><td>${escapeHtml(v.numer_rejestracyjny||'')}</td><td>${Number(v.aktualny_przebieg||0).toLocaleString('pl-PL')} km</td><td>${Number(v.aktualne_paliwo||0)}%</td><td><button type="button" class="btn-light" onclick="openVehicleDetails(${v.id})">Szczegóły</button> ${vehicleRoleCanViewHistory()?`<button type="button" class="btn-light" onclick="openVehicleHistory(${v.id})">Historia</button>`:''}</td></tr>`).join('')||'<tr><td colspan="7">Brak pojazdów.</td></tr>'}
  </tbody></table></div>`;
 }
+
+/* SWD - edycja i usuwanie pojazdów przez dowódcę/zastępcę/admina */
+function vehicleCanManageFleet(){
+  return ['admin','dowodca','zastepca'].includes(currentProfile?.rola);
+}
+
+async function deleteVehicle(id){
+  if(!vehicleCanManageFleet())return alert('Pojazdy może usuwać tylko dowódca, zastępca lub administrator.');
+
+  const {data:active}=await supabaseClient
+    .from('karty_pojazdow')
+    .select('id')
+    .eq('pojazd_id',id)
+    .eq('aktywna',true)
+    .limit(1);
+
+  if(active && active.length){
+    return alert('Nie można usunąć pojazdu, który jest aktualnie w patrolu.');
+  }
+
+  if(!confirm('Na pewno usunąć pojazd? Historia pobrań zostanie w bazie.'))return;
+
+  const {error}=await supabaseClient.from('pojazdy').delete().eq('id',id);
+  if(error)return alert(error.message);
+
+  await loadPojazdySystem();
+}
+
+function editVehicleFromTable(id){
+  if(!vehicleCanManageFleet())return alert('Pojazdy może edytować tylko dowódca, zastępca lub administrator.');
+  if(typeof prefillEditPojazd === 'function'){
+    prefillEditPojazd(id);
+    document.getElementById('pojazdMarka')?.scrollIntoView({behavior:'smooth',block:'center'});
+  }
+}
+
+function renderPojazdyLista(){
+ const box=document.getElementById('pojazdyLista');if(!box)return;
+ const search=ensureVehicleSearchBox();
+ let list=[...(window.pojazdyLista||[])].sort((a,b)=>vehicleStatusOrder(a.status)-vehicleStatusOrder(b.status)||vehicleCleanKrypton(a.krypton).localeCompare(vehicleCleanKrypton(b.krypton),'pl',{numeric:true}));
+ const q=(search?.value||'').toLowerCase();
+ if(q)list=list.filter(v=>`${v.marka||''} ${v.model||''} ${v.krypton||''} ${v.numer_rejestracyjny||''} ${v.status||''}`.toLowerCase().includes(q));
+
+ box.innerHTML=`<div class="vehicle-table-wrap vehicle-table-centered">
+  <table class="vehicle-table">
+    <thead>
+      <tr>
+        <th>Status</th>
+        <th>Kryptonim</th>
+        <th>Pojazd</th>
+        <th>Nr rej.</th>
+        <th>Przebieg</th>
+        <th>Paliwo</th>
+        <th>Akcja</th>
+      </tr>
+    </thead>
+    <tbody>
+      ${list.map(v=>`
+        <tr>
+          <td>${vehicleStatusBadge(v.status)}</td>
+          <td><b>${escapeHtml(vehicleCleanKrypton(v.krypton))}</b></td>
+          <td>${escapeHtml((v.marka||'')+' '+(v.model||''))}</td>
+          <td>${escapeHtml(v.numer_rejestracyjny||'')}</td>
+          <td>${Number(v.aktualny_przebieg||0).toLocaleString('pl-PL')} km</td>
+          <td>${Number(v.aktualne_paliwo||0)}%</td>
+          <td class="vehicle-actions">
+            <button type="button" class="btn-light" onclick="openVehicleDetails(${v.id})">Szczegóły</button>
+            ${vehicleRoleCanViewHistory()?`<button type="button" class="btn-light" onclick="openVehicleHistory(${v.id})">Historia</button>`:''}
+            ${vehicleCanManageFleet()?`<button type="button" class="btn-light" onclick="editVehicleFromTable(${v.id})">Edytuj</button><button type="button" class="btn-danger" onclick="deleteVehicle(${v.id})">Usuń</button>`:''}
+          </td>
+        </tr>
+      `).join('')||'<tr><td colspan="7">Brak pojazdów.</td></tr>'}
+    </tbody>
+  </table>
+ </div>`;
+}
+
+window.deleteVehicle = deleteVehicle;
+window.editVehicleFromTable = editVehicleFromTable;
