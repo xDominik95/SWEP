@@ -1,0 +1,11 @@
+
+function nE(v){return String(v??'').replace(/[&<>"']/g,s=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[s]))}
+function nSet(id,v){const e=document.getElementById(id);if(e)e.textContent=v}
+async function loadCommanderNotifications(){
+ const [l,c,s,p]=await Promise.all([supabaseClient.from('urlopy').select('*').eq('status','oczekuje').order('created_at',{ascending:false}).limit(50),supabaseClient.from('koszty').select('*').eq('status','oczekuje').order('created_at',{ascending:false}).limit(50),supabaseClient.from('sluzby').select('*').order('created_at',{ascending:false}).limit(100),supabaseClient.from('pojazdy').select('*').order('created_at',{ascending:false}).limit(100)]);
+ const leaves=l.data||[], costs=c.data||[], services=(s.data||[]).filter(x=>String(x.opis||'').toLowerCase().includes('weryfik')||String(x.opis||'').toLowerCase().includes('zatwierd')), vehicles=(p.data||[]).filter(x=>String(x.status||'').toLowerCase().includes('uszk')||String(x.status||'').toLowerCase().includes('warsztat')||Number(x.aktualne_paliwo||100)<50||Number(x.aktualny_silnik||100)<50||Number(x.aktualna_karoseria||100)<50);
+ nSet('notifLeaves',leaves.length);nSet('notifCosts',costs.length);nSet('notifServices',services.length);nSet('notifVehicles',vehicles.length);
+ const list=[...leaves.map(x=>['🏖️','Urlop',x.funkcjonariusz,`${x.typ||''} ${x.data_od||''}-${x.data_do||''}`]),...costs.map(x=>['💸','Koszt',x.funkcjonariusz,`${x.pojazd||''} ${x.numer_rejestracyjny||''} ${x.kwota||0} zł`]),...services.map(x=>['⏱️','Służba',x.funkcjonariusz,x.opis||'Do weryfikacji']),...vehicles.map(x=>['🚔','Pojazd',`${x.marka||''} ${x.model||''}`,`${x.numer_rejestracyjny||''} | paliwo ${x.aktualne_paliwo||0}% | silnik ${x.aktualny_silnik||0}% | karoseria ${x.aktualna_karoseria||0}%`])];
+ document.getElementById('notificationsList').innerHTML=list.map(n=>`<div class="notification-item"><div class="notification-icon">${n[0]}</div><div><b>${nE(n[1])} — ${nE(n[2])}</b><p>${nE(n[3])}</p></div></div>`).join('')||'<div class="empty">Brak powiadomień.</div>';
+}
+if(typeof showPage==='function'&&!window._notPatch){window._notPatch=true;const old=showPage;showPage=function(id,btn){old(id,btn);if(id==='notifications'){const t=document.getElementById('pageTitle');if(t)t.textContent='Powiadomienia';loadCommanderNotifications();}}}

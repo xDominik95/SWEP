@@ -57,13 +57,15 @@
       <button class="nav" onclick="showPage('hours', this)">⏱️ Godziny służby</button>
       <button class="nav" onclick="showPage('officerCards', this)">🪪 Karty funkcjonariuszy</button>
       <button class="nav" onclick="showPage('costs', this)">💸 Koszty</button>
+      <button class="nav commander-only hidden" onclick="showPage('payments', this)">💰 Wypłaty</button>
+      <button class="nav commander-only hidden" onclick="showPage('notifications', this)">🔔 Powiadomienia</button>
       <button class="nav commander-only hidden" onclick="showPage('users', this)">👮 Funkcjonariusze</button>
       <button class="nav commander-only hidden" onclick="showPage('archive', this)">📁 Archiwum</button>
       <button class="nav commander-only hidden" onclick="showPage('activity', this)">📊 Aktywność</button>
       <button class="nav commander-only hidden" onclick="showPage('trash', this)">🗑️ Kosz</button>
       <button class="nav commander-only hidden" onclick="showPage('settings', this)">⚙️ Ustawienia</button>
       <button class="nav" onclick="logout()">🚪 Wyloguj</button>
-      <div class="version">SWD v2.0<br>System testowy</div>
+      <div class="version">SWD v2.0<br>:D</div>
     </aside>
 
     <main class="main">
@@ -285,6 +287,24 @@
         </div>
       </section>
 
+      
+      <section id="payments" class="page hidden">
+        <div class="panel commander-only hidden">
+          <div class="section-head"><div><h3>Moduł wypłat</h3><p>Rozliczenie godzin, zaakceptowanych kosztów i kwoty do wypłaty.</p></div><div class="action-row"><button class="btn-light" onclick="loadPayments()">Odśwież</button><button class="btn-primary" onclick="createPayoutBatch()">Zapisz listę wypłat</button></div></div>
+          <div class="payment-summary"><div><small>Funkcjonariusze</small><b id="payCount">0</b></div><div><small>Godziny</small><b id="payHours">0</b></div><div><small>Koszty</small><b id="payCosts">0 zł</b></div><div><small>Do wypłaty</small><b id="payTotal">0 zł</b></div></div>
+          <div id="paymentsList" class="payment-table-wrap"></div>
+        </div>
+        <div class="panel commander-only hidden"><div class="section-head"><div><h3>Historia wypłat</h3><p>Zapisane listy wypłat oraz status realizacji.</p></div><button class="btn-light" onclick="loadPayoutHistory()">Odśwież</button></div><div id="payoutHistoryList" class="list"></div></div>
+      </section>
+
+      <section id="notifications" class="page hidden">
+        <div class="panel commander-only hidden">
+          <div class="section-head"><div><h3>Powiadomienia dowódcy</h3><p>Urlopy, koszty, służby do zatwierdzenia i pojazdy wymagające uwagi.</p></div><button class="btn-light" onclick="loadCommanderNotifications()">Odśwież</button></div>
+          <div class="notification-summary"><div><small>Urlopy</small><b id="notifLeaves">0</b></div><div><small>Koszty</small><b id="notifCosts">0</b></div><div><small>Służby</small><b id="notifServices">0</b></div><div><small>Pojazdy</small><b id="notifVehicles">0</b></div></div>
+          <div id="notificationsList" class="list"></div>
+        </div>
+      </section>
+
       <section id="users" class="page hidden">
         <div class="panel commander-only hidden">
           <h3>Utwórz konto funkcjonariusza</h3>
@@ -319,7 +339,18 @@
           <div id="profilesList" class="list"></div>
         </div>
       </section>
-      <section id="archive" class="page hidden"><div class="panel"><div class="section-head"><div><h3>Archiwum dokumentów</h3><p>Wyszukiwanie zapisanych dokumentów.</p></div><button class="btn-light" onclick="loadArchive()">Odśwież</button></div><input id="archiveSearch" placeholder="Szukaj..." oninput="loadArchive()" /><div id="archiveList" class="list"></div></div></section>
+      <section id="archive" class="page hidden">
+        <div class="panel">
+          <div class="section-head"><div><h3>Archiwum dokumentów</h3><p>Wyszukiwanie i filtrowanie dokumentów.</p></div><button class="btn-light" onclick="loadArchive()">Odśwież</button></div>
+          <div class="archive-filters">
+            <input id="archiveSearch" placeholder="Szukaj po numerze, autorze, treści..." oninput="loadArchive()" />
+            <select id="archiveType" onchange="loadArchive()"><option value="">Wszystkie typy</option><option value="notatka_urzedowa">Notatka urzędowa</option><option value="notatka_sluzbowa">Notatka służbowa</option><option value="raport_spb">Użycie ŚPB / broni palnej</option><option value="wniosek_o_ukaranie">Wniosek o ukaranie</option><option value="zatrzymanie_dokumentu">Pokwitowanie zatrzymania dokumentu</option></select>
+            <input id="archiveFrom" type="date" onchange="loadArchive()" />
+            <input id="archiveTo" type="date" onchange="loadArchive()" />
+          </div>
+          <div id="archiveList" class="list"></div>
+        </div>
+      </section>
       <section id="activity" class="page hidden"><div class="panel"><h3>Aktywność</h3><div id="activityList" class="list"></div></div></section>
       <section id="trash" class="page hidden"><div class="panel"><h3>Kosz</h3><div id="trashList" class="list"></div></div></section>
       <section id="settings" class="page hidden">
@@ -349,5 +380,8 @@
   <script src="js/hours.js"></script>
   <script src="js/costs.js"></script>
   <script src="js/officer-cards.js"></script>
+  <script src="js/payments.js"></script>
+  <script src="js/notifications.js"></script>
+  <script src="js/archive-advanced.js"></script>
 </body>
 </html>
