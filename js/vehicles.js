@@ -1,449 +1,242 @@
-window.pojazdyLista=[];window.aktywneKartyPojazdow=[];let historiaKartPojazdow=[];
-function vMsg(id,text,ok=true){const e=document.getElementById(id);if(!e)return;e.textContent=text||'';e.style.color=ok?'#187a2f':'#b00020'}
-function getVal(id){return document.getElementById(id)?.value||null}function getNum(id){const v=document.getElementById(id)?.value;return v===''||v==null?null:Number(v)}function setVal(id,v){const e=document.getElementById(id);if(e)e.value=v??''}
-function todayString(){return new Date().toISOString().slice(0,10)}function currentTimeString(){return new Date().toTimeString().slice(0,5)}
-function escapeHtml(str){return String(str||'').replace(/[&<>"']/g,s=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[s]))}
-function isDowodcaOrAdminVehicles(){return ['admin','dowodca','zastepca'].includes(currentProfile?.rola)}
-function meterClass(v){v=Number(v??0);if(v<50)return'meter-danger';if(v<70)return'meter-warn';return'meter-ok'}
-function vehicleWarnings(p){return `${Number(p.aktualne_paliwo??100)<50?'<div class="vehicle-warning">⛽ <b>Wymaga tankowania</b></div>':''}${Number(p.aktualny_silnik??100)<50?'<div class="vehicle-danger">🔧 <b>Silnik wymaga naprawy</b></div>':''}${Number(p.aktualna_karoseria??100)<50?'<div class="vehicle-danger">🛠️ <b>Karoseria wymaga naprawy</b></div>':''}`}
-async function loadPojazdySystem(){await Promise.all([loadPojazdyLista(),loadAktywneKartyPojazdow(),loadHistoriaKartPojazdow()]);if(!getVal('pobranieData'))setVal('pobranieData',todayString());if(!getVal('pobranieGodzina'))setVal('pobranieGodzina',currentTimeString());updateStats()}
-async function loadPojazdyLista(){const {data,error}=await supabaseClient.from('pojazdy').select('*').order('created_at',{ascending:false});if(error){const b=document.getElementById('pojazdyLista');if(b)b.innerHTML=`<div class="empty">${error.message}</div>`;return}window.pojazdyLista=data||[];renderPojazdyLista();renderPojazdSelect()}
-function renderPojazdyLista(){const box=document.getElementById('pojazdyLista');if(!box)return;if(!window.pojazdyLista.length){box.innerHTML='<div class="empty">Brak dodanych radiowozów.</div>';return}box.innerHTML=window.pojazdyLista.map(p=>`<div class="vehicle-card"><div class="vehicle-top"><div><h4>${escapeHtml(p.marka||'')} ${escapeHtml(p.model||'')}</h4><p class="small">${escapeHtml(p.krypton||'')} | ${escapeHtml(p.numer_rejestracyjny||'')}</p></div><span class="status ${escapeHtml(p.status||'Dostępny')}">${escapeHtml(p.status||'Dostępny')}</span></div><div class="vehicle-detail-box"><div class="vehicle-detail-grid"><div><b>Marka:</b> ${escapeHtml(p.marka||'-')}</div><div><b>Model:</b> ${escapeHtml(p.model||'-')}</div><div><b>Kryptonim:</b> ${escapeHtml(p.krypton||'-')}</div><div><b>Rejestracja:</b> ${escapeHtml(p.numer_rejestracyjny||'-')}</div><div><b>Przebieg:</b> ${p.aktualny_przebieg||0} km</div><div><b>Paliwo:</b> ${p.aktualne_paliwo??0}%</div><div><b>Silnik:</b> ${p.aktualny_silnik??0}%</div><div><b>Karoseria:</b> ${p.aktualna_karoseria??0}%</div></div></div><p><b>Paliwo:</b> ${p.aktualne_paliwo??0}%</p><div class="meter"><span class="${meterClass(p.aktualne_paliwo)}" style="width:${p.aktualne_paliwo??0}%"></span></div><p><b>Silnik:</b> ${p.aktualny_silnik??0}%</p><div class="meter"><span class="${meterClass(p.aktualny_silnik)}" style="width:${p.aktualny_silnik??0}%"></span></div><p><b>Karoseria:</b> ${p.aktualna_karoseria??0}%</p><div class="meter"><span class="${meterClass(p.aktualna_karoseria)}" style="width:${p.aktualna_karoseria??0}%"></span></div>${vehicleWarnings(p)}</div>`).join('')}
-function renderPojazdSelect(){const s=document.getElementById('pobraniePojazdSelect');if(!s)return;const a=window.pojazdyLista.filter(p=>(p.status||'Dostępny')==='Dostępny');s.innerHTML=`<option value="">Wybierz radiowóz...</option>${a.map(p=>`<option value="${p.id}">${escapeHtml(p.marka||'')} ${escapeHtml(p.model||'')} | ${escapeHtml(p.krypton||'')} | ${escapeHtml(p.numer_rejestracyjny||'')}</option>`).join('')}`}
-async function addPojazd(){const row={marka:getVal('pojazdMarka'),model:getVal('pojazdModel'),krypton:getVal('pojazdKrypton'),numer_rejestracyjny:getVal('pojazdRejestracja'),status:'Dostępny',aktualny_przebieg:getNum('pojazdPrzebieg')||0,aktualne_paliwo:getNum('pojazdPaliwo')??100,aktualny_silnik:getNum('pojazdSilnik')??100,aktualna_karoseria:getNum('pojazdKaroseria')??100,uwagi:getVal('pojazdUwagi')};if(!row.marka||!row.model||!row.krypton||!row.numer_rejestracyjny)return vMsg('pojazdMsg','Uzupełnij markę, model, krypton i rejestrację.',false);const id=getVal('pojazdEditingId');const q=id?supabaseClient.from('pojazdy').update(row).eq('id',id):supabaseClient.from('pojazdy').insert(row);const {error}=await q;if(error)return vMsg('pojazdMsg',error.message,false);vMsg('pojazdMsg',id?'Radiowóz zaktualizowany.':'Radiowóz dodany.');clearPojazdForm();await loadPojazdySystem()}
-function prefillEditPojazd(id){const p=window.pojazdyLista.find(x=>x.id===id);if(!p)return;setVal('pojazdEditingId',p.id);setVal('pojazdMarka',p.marka);setVal('pojazdModel',p.model);setVal('pojazdKrypton',p.krypton);setVal('pojazdRejestracja',p.numer_rejestracyjny);setVal('pojazdPrzebieg',p.aktualny_przebieg);setVal('pojazdPaliwo',p.aktualne_paliwo);setVal('pojazdSilnik',p.aktualny_silnik);setVal('pojazdKaroseria',p.aktualna_karoseria);setVal('pojazdUwagi',p.uwagi);document.getElementById('pojazdFormTitle').innerText='Edycja radiowozu'}
-function clearPojazdForm(){['pojazdEditingId','pojazdMarka','pojazdModel','pojazdKrypton','pojazdRejestracja','pojazdPrzebieg','pojazdPaliwo','pojazdSilnik','pojazdKaroseria','pojazdUwagi'].forEach(id=>setVal(id,''));document.getElementById('pojazdFormTitle').innerText='Dodaj radiowóz'}
-async function setPojazdStatus(id,status){const {error}=await supabaseClient.from('pojazdy').update({status}).eq('id',id);if(error)return alert(error.message);await loadPojazdySystem()}
-async function pobierzRadiowoz(){const pojazdId=getNum('pobraniePojazdSelect');if(!pojazdId)return vMsg('pobranieMsg','Wybierz radiowóz.',false);const p=window.pojazdyLista.find(x=>x.id===pojazdId);const row={pojazd_id:p.id,aktywna:true,status:'W patrolu',created_by:currentProfile?.imie_nazwisko||currentUser?.email,pojazd:`${p.marka||''} ${p.model||''}`.trim(),krypton:p.krypton,numer_rejestracyjny:p.numer_rejestracyjny,rozpoczecie_przebieg:getNum('pobraniePrzebieg'),rozpoczecie_godzina:getVal('pobranieGodzina'),rozpoczecie_data:getVal('pobranieData'),rozpoczecie_pobierajacy:currentProfile?.imie_nazwisko||currentUser?.email,rozpoczecie_paliwo:getNum('pobraniePaliwo'),rozpoczecie_silnik:getNum('pobranieSilnik'),rozpoczecie_karoseria:getNum('pobranieKaroseria'),uwagi_pobrania:getVal('pobranieUwagi')};if(!row.rozpoczecie_przebieg||!row.rozpoczecie_godzina||!row.rozpoczecie_data)return vMsg('pobranieMsg','Uzupełnij przebieg, godzinę i datę.',false);let r=await supabaseClient.from('karty_pojazdow').insert(row);if(r.error)return vMsg('pobranieMsg',r.error.message,false);await supabaseClient.from('pojazdy').update({status:'W patrolu',aktualny_przebieg:row.rozpoczecie_przebieg,aktualne_paliwo:row.rozpoczecie_paliwo,aktualny_silnik:row.rozpoczecie_silnik,aktualna_karoseria:row.rozpoczecie_karoseria}).eq('id',p.id);vMsg('pobranieMsg','Radiowóz pobrany.');await loadPojazdySystem()}
-async function loadAktywneKartyPojazdow(){const {data}=await supabaseClient.from('karty_pojazdow').select('*').eq('aktywna',true).order('created_at',{ascending:false});window.aktywneKartyPojazdow=data||[];const box=document.getElementById('aktywneKartyPojazdow');if(!box)return;box.innerHTML=window.aktywneKartyPojazdow.map(k=>`<div class="list-item"><span class="status">W patrolu</span><h4>${escapeHtml(k.pojazd||'')} — ${escapeHtml(k.krypton||'')}</h4><p><b>Pobrał:</b> ${escapeHtml(k.rozpoczecie_pobierajacy||'')}</p><p><b>Start:</b> ${escapeHtml(k.rozpoczecie_data||'')} ${escapeHtml(k.rozpoczecie_godzina||'')}</p><button class="btn-primary" onclick="openZakonczeniePatrolu(${k.id})">Zakończ patrol</button></div>`).join('')||'<div class="empty">Brak aktywnych patroli.</div>'}
-function openZakonczeniePatrolu(id){const k=window.aktywneKartyPojazdow.find(x=>x.id===id);if(!k)return;setVal('zakonczenieKartaId',k.id);setVal('zakonczeniePojazdInfo',`${k.pojazd||''} | ${k.krypton||''} | ${k.numer_rejestracyjny||''}`);setVal('zakonczenieData',todayString());setVal('zakonczenieGodzina',currentTimeString());document.getElementById('zakonczeniePanel').classList.remove('hidden');document.getElementById('zakonczeniePanel').scrollIntoView({behavior:'smooth'})}
-async function zakonczPatrol(){const id=getNum('zakonczenieKartaId'),k=window.aktywneKartyPojazdow.find(x=>x.id===id);if(!k)return;const usz=document.getElementById('zakonczenieUszkodzenia').checked;const patch={aktywna:false,status:'Zakończony',zakonczenie_przebieg:getNum('zakonczeniePrzebieg'),zakonczenie_godzina:getVal('zakonczenieGodzina'),zakonczenie_data:getVal('zakonczenieData'),zakonczenie_zdajacy:currentProfile?.imie_nazwisko||currentUser?.email,zakonczenie_paliwo:getNum('zakonczeniePaliwo'),zakonczenie_silnik:getNum('zakonczenieSilnik'),zakonczenie_karoseria:getNum('zakonczenieKaroseria'),uwagi_zwrotu:getVal('zakonczenieUwagi'),uszkodzenia:usz,uwagi_uszkodzenia:getVal('zakonczenieUwagiUszkodzenia')};if(!patch.zakonczenie_przebieg||!patch.zakonczenie_godzina||!patch.zakonczenie_data)return vMsg('zakonczenieMsg','Uzupełnij przebieg, godzinę i datę.',false);let r=await supabaseClient.from('karty_pojazdow').update(patch).eq('id',id);if(r.error)return vMsg('zakonczenieMsg',r.error.message,false);await supabaseClient.from('pojazdy').update({status:usz?'Uszkodzony':'Dostępny',aktualny_przebieg:patch.zakonczenie_przebieg,aktualne_paliwo:patch.zakonczenie_paliwo,aktualny_silnik:patch.zakonczenie_silnik,aktualna_karoseria:patch.zakonczenie_karoseria}).eq('id',k.pojazd_id);vMsg('zakonczenieMsg','Patrol zakończony.');clearZakonczenieForm();await loadPojazdySystem()}
-function clearZakonczenieForm(){['zakonczenieKartaId','zakonczeniePojazdInfo','zakonczeniePrzebieg','zakonczenieGodzina','zakonczenieData','zakonczeniePaliwo','zakonczenieSilnik','zakonczenieKaroseria','zakonczenieUwagi','zakonczenieUwagiUszkodzenia'].forEach(id=>setVal(id,''));document.getElementById('zakonczenieUszkodzenia').checked=false;document.getElementById('zakonczeniePanel').classList.add('hidden')}
-async function loadHistoriaKartPojazdow(){const {data}=await supabaseClient.from('karty_pojazdow').select('*').order('created_at',{ascending:false}).limit(100);historiaKartPojazdow=data||[];const tb=document.getElementById('historiaKartPojazdow');if(!tb)return;tb.innerHTML=historiaKartPojazdow.map(k=>`<tr><td>${(k.created_at||'').slice(0,10)}</td><td>${k.aktywna?'W patrolu':'Zakończony'}</td><td>${escapeHtml(k.pojazd||'')}</td><td>${escapeHtml(k.krypton||'')}</td><td>${escapeHtml(k.numer_rejestracyjny||'')}</td><td>${escapeHtml(k.rozpoczecie_pobierajacy||'')}</td><td>${escapeHtml(k.zakonczenie_zdajacy||'-')}</td><td>${k.rozpoczecie_przebieg||0} → ${k.zakonczenie_przebieg||'-'} km</td></tr>`).join('')||'<tr><td colspan="8">Brak historii.</td></tr>'}
-/* SWD - POPRAWKA: tabela pojazdów pod właściwą funkcję renderPojazdyLista */
-function vehicleRoleCanViewHistory(){return ['admin','dowodca','zastepca'].includes(currentProfile?.rola)}
-function vehicleCleanKrypton(k){return String(k||'').replace(/^OPP[\s\-_/]*/i,'').trim()}
-function vehicleStatusOrder(s){s=String(s||'').toLowerCase();if(s.includes('dost'))return 1;if(s.includes('słu')||s.includes('sluz')||s.includes('patrol'))return 2;if(s.includes('uszk'))return 3;if(s.includes('warsztat'))return 4;return 9}
-function vehicleStatusBadge(s){s=String(s||'Dostępny');let l=s.toLowerCase(),i='⚪';if(l.includes('dost'))i='🟢';else if(l.includes('słu')||l.includes('sluz')||l.includes('patrol'))i='🔵';else if(l.includes('uszk'))i='🔴';else if(l.includes('warsztat'))i='🟡';return `<span class="vehicle-status-badge">${i} ${escapeHtml(s)}</span>`}
+/* SWD - vehicles-hotfix.js
+   Osobna poprawka przycisków Szczegóły / Historia.
+   Działa niezależnie od tego, ile razy renderPojazdyLista jest nadpisane w vehicles.js.
+*/
 
-function renderPojazdyLista(){
- const box=document.getElementById('pojazdyLista');if(!box)return;
- let list=[...(window.pojazdyLista||[])].sort((a,b)=>vehicleStatusOrder(a.status)-vehicleStatusOrder(b.status)||vehicleCleanKrypton(a.krypton).localeCompare(vehicleCleanKrypton(b.krypton),'pl',{numeric:true}));
- const q=(document.getElementById('vehicleSearch')?.value||'').toLowerCase();
- if(q)list=list.filter(v=>`${v.marka||''} ${v.model||''} ${v.krypton||''} ${v.numer_rejestracyjny||''} ${v.status||''}`.toLowerCase().includes(q));
- box.innerHTML=`<div class="vehicle-toolbar"><input id="vehicleSearch" placeholder="Szukaj po kryptonimie, rejestracji, marce..." value="${escapeHtml(q)}" oninput="renderPojazdyLista()"></div>
- <div class="vehicle-table-wrap"><table class="vehicle-table"><thead><tr><th>Status</th><th>Kryptonim</th><th>Pojazd</th><th>Nr rej.</th><th>Przebieg</th><th>Paliwo</th><th>Akcja</th></tr></thead><tbody>
- ${list.map(v=>`<tr><td>${vehicleStatusBadge(v.status)}</td><td><b>${escapeHtml(vehicleCleanKrypton(v.krypton))}</b></td><td>${escapeHtml((v.marka||'')+' '+(v.model||''))}</td><td>${escapeHtml(v.numer_rejestracyjny||'')}</td><td>${Number(v.aktualny_przebieg||0).toLocaleString('pl-PL')} km</td><td>${Number(v.aktualne_paliwo||0)}%</td><td><button class="btn-light" onclick="openVehicleDetails(${v.id})">Szczegóły</button> ${vehicleRoleCanViewHistory()?`<button class="btn-light" onclick="openVehicleHistory(${v.id})">Historia</button>`:''}</td></tr>`).join('')||'<tr><td colspan="7">Brak pojazdów.</td></tr>'}
- </tbody></table></div>`;
-}
-
-async function openVehicleDetails(id){
- const {data:v,error}=await supabaseClient.from('pojazdy').select('*').eq('id',id).single(); if(error)return alert(error.message);
- document.body.insertAdjacentHTML('beforeend',`<div class="vehicle-modal-backdrop" id="vehicleDetailsModal"><div class="vehicle-modal"><div class="vehicle-modal-head"><h3>Szczegóły pojazdu</h3><button class="btn-light" onclick="closeVehicleModal('vehicleDetailsModal')">Zamknij</button></div><div class="vehicle-details-grid"><div><small>Marka</small><b>${escapeHtml(v.marka||'-')}</b></div><div><small>Model</small><b>${escapeHtml(v.model||'-')}</b></div><div><small>Kryptonim</small><b>${escapeHtml(vehicleCleanKrypton(v.krypton))}</b></div><div><small>Numer rejestracyjny</small><b>${escapeHtml(v.numer_rejestracyjny||'-')}</b></div><div><small>Aktualny przebieg</small><b>${Number(v.aktualny_przebieg||0).toLocaleString('pl-PL')} km</b></div><div><small>Poziom paliwa</small><b>${Number(v.aktualne_paliwo||0)}%</b></div></div><div class="action-row">${vehicleRoleCanViewHistory()?`<button class="btn-primary" onclick="openVehicleHistory(${v.id})">📋 Historia pobrań</button>`:''}</div></div></div>`);
-}
-
-async function openVehicleHistory(id){
- if(!vehicleRoleCanViewHistory())return alert('Historię może sprawdzić tylko dowódca, zastępca lub administrator.');
- const {data:v}=await supabaseClient.from('pojazdy').select('*').eq('id',id).single();
- const {data,error}=await supabaseClient.from('karty_pojazdow').select('*').eq('pojazd_id',id).order('created_at',{ascending:false}).limit(200);
- if(error)return alert(error.message);
- const rows=(data||[]).map(k=>`<tr onclick="openVehicleHistoryEntry(${k.id})"><td>${escapeHtml(k.rozpoczecie_data||String(k.created_at||'').slice(0,10)||'-')}</td><td>${escapeHtml(k.rozpoczecie_pobierajacy||k.created_by||'-')}</td><td>${escapeHtml(k.rozpoczecie_godzina||'-')}</td><td>${escapeHtml(k.zakonczenie_godzina||'-')}</td><td>${Number(k.rozpoczecie_przebieg||0).toLocaleString('pl-PL')}</td><td>${k.zakonczenie_przebieg?Number(k.zakonczenie_przebieg).toLocaleString('pl-PL'):'-'}</td><td>${escapeHtml(k.status||'')}</td></tr>`).join('');
- document.body.insertAdjacentHTML('beforeend',`<div class="vehicle-modal-backdrop" id="vehicleHistoryModal"><div class="vehicle-modal vehicle-modal-wide"><div class="vehicle-modal-head"><h3>Historia pobrań — ${escapeHtml((v?.marka||'')+' '+(v?.model||''))} | ${escapeHtml(vehicleCleanKrypton(v?.krypton))}</h3><button class="btn-light" onclick="closeVehicleModal('vehicleHistoryModal')">Zamknij</button></div><div class="vehicle-table-wrap"><table class="vehicle-table"><thead><tr><th>Data</th><th>Funkcjonariusz</th><th>Pobranie</th><th>Zdanie</th><th>Przebieg start</th><th>Przebieg koniec</th><th>Status</th></tr></thead><tbody>${rows||'<tr><td colspan="7">Brak historii pobrań.</td></tr>'}</tbody></table></div></div></div>`);
-}
-
-async function openVehicleHistoryEntry(id){
- const {data:k,error}=await supabaseClient.from('karty_pojazdow').select('*').eq('id',id).single(); if(error)return alert(error.message);
- document.body.insertAdjacentHTML('beforeend',`<div class="vehicle-modal-backdrop" id="vehicleHistoryEntryModal"><div class="vehicle-modal"><div class="vehicle-modal-head"><h3>Szczegóły pobrania</h3><button class="btn-light" onclick="closeVehicleModal('vehicleHistoryEntryModal')">Zamknij</button></div><div class="vehicle-details-grid"><div><small>Pojazd</small><b>${escapeHtml(k.pojazd||'-')}</b></div><div><small>Kryptonim</small><b>${escapeHtml(vehicleCleanKrypton(k.krypton))}</b></div><div><small>Pobrał</small><b>${escapeHtml(k.rozpoczecie_pobierajacy||k.created_by||'-')}</b></div><div><small>Data</small><b>${escapeHtml(k.rozpoczecie_data||'-')}</b></div><div><small>Godzina pobrania</small><b>${escapeHtml(k.rozpoczecie_godzina||'-')}</b></div><div><small>Godzina zdania</small><b>${escapeHtml(k.zakonczenie_godzina||'-')}</b></div><div><small>Przebieg start</small><b>${Number(k.rozpoczecie_przebieg||0).toLocaleString('pl-PL')} km</b></div><div><small>Przebieg koniec</small><b>${k.zakonczenie_przebieg?Number(k.zakonczenie_przebieg).toLocaleString('pl-PL')+' km':'-'}</b></div><div><small>Paliwo przy pobraniu</small><b>${Number(k.rozpoczecie_paliwo||0)}%</b></div><div><small>Paliwo przy zdaniu</small><b>${k.zakonczenie_paliwo!==null&&k.zakonczenie_paliwo!==undefined?Number(k.zakonczenie_paliwo)+'%':'-'}</b></div><div><small>Uszkodzenia</small><b>${k.uszkodzenia?'Tak':'Nie'}</b></div><div><small>Status</small><b>${escapeHtml(k.status||'-')}</b></div></div><div class="vehicle-history-note"><b>Uwagi przy pobraniu:</b><br>${escapeHtml(k.uwagi_pobrania||'-')}</div><div class="vehicle-history-note"><b>Uwagi przy zwrocie:</b><br>${escapeHtml(k.uwagi_zwrotu||'-')}</div><div class="vehicle-history-note"><b>Uwagi uszkodzeń:</b><br>${escapeHtml(k.uwagi_uszkodzenia||'-')}</div></div></div>`);
-}
-function closeVehicleModal(id){document.getElementById(id)?.remove()}
-
-/* SWD - POPRAWKA v3: wyszukiwarka bez utraty fokusu + wyśrodkowana tabela */
-function ensureVehicleSearchBox(){
-  const listBox=document.getElementById('pojazdyLista');
-  if(!listBox)return null;
-
-  let toolbar=document.getElementById('vehicleSearchToolbar');
-  if(!toolbar){
-    toolbar=document.createElement('div');
-    toolbar.id='vehicleSearchToolbar';
-    toolbar.className='vehicle-toolbar vehicle-toolbar-centered';
-    toolbar.innerHTML=`<input id="vehicleSearch" placeholder="Szukaj po kryptonimie, rejestracji, marce..." oninput="renderPojazdyLista()">`;
-    listBox.parentNode.insertBefore(toolbar,listBox);
-  }
-  return document.getElementById('vehicleSearch');
-}
-
-function renderPojazdyLista(){
- const box=document.getElementById('pojazdyLista');if(!box)return;
- const search=ensureVehicleSearchBox();
- let list=[...(window.pojazdyLista||[])].sort((a,b)=>vehicleStatusOrder(a.status)-vehicleStatusOrder(b.status)||vehicleCleanKrypton(a.krypton).localeCompare(vehicleCleanKrypton(b.krypton),'pl',{numeric:true}));
- const q=(search?.value||'').toLowerCase();
- if(q)list=list.filter(v=>`${v.marka||''} ${v.model||''} ${v.krypton||''} ${v.numer_rejestracyjny||''} ${v.status||''}`.toLowerCase().includes(q));
- box.innerHTML=`<div class="vehicle-table-wrap vehicle-table-centered"><table class="vehicle-table"><thead><tr><th>Status</th><th>Kryptonim</th><th>Pojazd</th><th>Nr rej.</th><th>Przebieg</th><th>Paliwo</th><th>Akcja</th></tr></thead><tbody>
- ${list.map(v=>`<tr><td>${vehicleStatusBadge(v.status)}</td><td><b>${escapeHtml(vehicleCleanKrypton(v.krypton))}</b></td><td>${escapeHtml((v.marka||'')+' '+(v.model||''))}</td><td>${escapeHtml(v.numer_rejestracyjny||'')}</td><td>${Number(v.aktualny_przebieg||0).toLocaleString('pl-PL')} km</td><td>${Number(v.aktualne_paliwo||0)}%</td><td><button class="btn-light" onclick="openVehicleDetails(${v.id})">Szczegóły</button> ${vehicleRoleCanViewHistory()?`<button class="btn-light" onclick="openVehicleHistory(${v.id})">Historia</button>`:''}</td></tr>`).join('')||'<tr><td colspan="7">Brak pojazdów.</td></tr>'}
- </tbody></table></div>`;
-}
-
-/* SWD - POPRAWKA v4: działające przyciski Szczegóły / Historia */
-window.openVehicleDetails = async function(id){
-  const {data:v,error}=await supabaseClient.from('pojazdy').select('*').eq('id',id).single();
-  if(error)return alert(error.message);
-  document.getElementById('vehicleDetailsModal')?.remove();
-  document.body.insertAdjacentHTML('beforeend',`
-    <div class="vehicle-modal-backdrop" id="vehicleDetailsModal">
-      <div class="vehicle-modal">
-        <div class="vehicle-modal-head">
-          <h3>Szczegóły pojazdu</h3>
-          <button type="button" class="btn-light" onclick="closeVehicleModal('vehicleDetailsModal')">Zamknij</button>
-        </div>
-        <div class="vehicle-details-grid">
-          <div><small>Marka</small><b>${escapeHtml(v.marka||'-')}</b></div>
-          <div><small>Model</small><b>${escapeHtml(v.model||'-')}</b></div>
-          <div><small>Kryptonim</small><b>${escapeHtml(vehicleCleanKrypton(v.krypton))}</b></div>
-          <div><small>Numer rejestracyjny</small><b>${escapeHtml(v.numer_rejestracyjny||'-')}</b></div>
-          <div><small>Aktualny przebieg</small><b>${Number(v.aktualny_przebieg||0).toLocaleString('pl-PL')} km</b></div>
-          <div><small>Poziom paliwa</small><b>${Number(v.aktualne_paliwo||0)}%</b></div>
-        </div>
-        <div class="action-row">
-          ${vehicleRoleCanViewHistory()?`<button type="button" class="btn-primary" onclick="openVehicleHistory(${v.id})">📋 Historia pobrań</button>`:''}
-        </div>
-      </div>
-    </div>
-  `);
-};
-
-window.openVehicleHistory = async function(id){
-  if(!vehicleRoleCanViewHistory())return alert('Historię może sprawdzić tylko dowódca, zastępca lub administrator.');
-  const {data:v,error:ve}=await supabaseClient.from('pojazdy').select('*').eq('id',id).single();
-  if(ve)return alert(ve.message);
-  const {data,error}=await supabaseClient.from('karty_pojazdow').select('*').eq('pojazd_id',id).order('created_at',{ascending:false}).limit(200);
-  if(error)return alert(error.message);
-  document.getElementById('vehicleHistoryModal')?.remove();
-  const rows=(data||[]).map(k=>`
-    <tr class="vehicle-history-row" onclick="openVehicleHistoryEntry(${k.id})">
-      <td>${escapeHtml(k.rozpoczecie_data||String(k.created_at||'').slice(0,10)||'-')}</td>
-      <td>${escapeHtml(k.rozpoczecie_pobierajacy||k.created_by||'-')}</td>
-      <td>${escapeHtml(k.rozpoczecie_godzina||'-')}</td>
-      <td>${escapeHtml(k.zakonczenie_godzina||'-')}</td>
-      <td>${Number(k.rozpoczecie_przebieg||0).toLocaleString('pl-PL')}</td>
-      <td>${k.zakonczenie_przebieg?Number(k.zakonczenie_przebieg).toLocaleString('pl-PL'):'-'}</td>
-      <td>${escapeHtml(k.status||'')}</td>
-    </tr>
-  `).join('');
-  document.body.insertAdjacentHTML('beforeend',`
-    <div class="vehicle-modal-backdrop" id="vehicleHistoryModal">
-      <div class="vehicle-modal vehicle-modal-wide">
-        <div class="vehicle-modal-head">
-          <h3>Historia pobrań — ${escapeHtml((v.marka||'')+' '+(v.model||''))} | ${escapeHtml(vehicleCleanKrypton(v.krypton))}</h3>
-          <button type="button" class="btn-light" onclick="closeVehicleModal('vehicleHistoryModal')">Zamknij</button>
-        </div>
-        <div class="vehicle-table-wrap">
-          <table class="vehicle-table">
-            <thead><tr><th>Data</th><th>Funkcjonariusz</th><th>Pobranie</th><th>Zdanie</th><th>Przebieg start</th><th>Przebieg koniec</th><th>Status</th></tr></thead>
-            <tbody>${rows||'<tr><td colspan="7">Brak historii pobrań.</td></tr>'}</tbody>
-          </table>
-        </div>
-      </div>
-    </div>
-  `);
-};
-
-window.openVehicleHistoryEntry = async function(id){
-  const {data:k,error}=await supabaseClient.from('karty_pojazdow').select('*').eq('id',id).single();
-  if(error)return alert(error.message);
-  document.getElementById('vehicleHistoryEntryModal')?.remove();
-  document.body.insertAdjacentHTML('beforeend',`
-    <div class="vehicle-modal-backdrop" id="vehicleHistoryEntryModal">
-      <div class="vehicle-modal">
-        <div class="vehicle-modal-head">
-          <h3>Szczegóły pobrania</h3>
-          <button type="button" class="btn-light" onclick="closeVehicleModal('vehicleHistoryEntryModal')">Zamknij</button>
-        </div>
-        <div class="vehicle-details-grid">
-          <div><small>Pojazd</small><b>${escapeHtml(k.pojazd||'-')}</b></div>
-          <div><small>Kryptonim</small><b>${escapeHtml(vehicleCleanKrypton(k.krypton))}</b></div>
-          <div><small>Pobrał</small><b>${escapeHtml(k.rozpoczecie_pobierajacy||k.created_by||'-')}</b></div>
-          <div><small>Data</small><b>${escapeHtml(k.rozpoczecie_data||'-')}</b></div>
-          <div><small>Godzina pobrania</small><b>${escapeHtml(k.rozpoczecie_godzina||'-')}</b></div>
-          <div><small>Godzina zdania</small><b>${escapeHtml(k.zakonczenie_godzina||'-')}</b></div>
-          <div><small>Przebieg start</small><b>${Number(k.rozpoczecie_przebieg||0).toLocaleString('pl-PL')} km</b></div>
-          <div><small>Przebieg koniec</small><b>${k.zakonczenie_przebieg?Number(k.zakonczenie_przebieg).toLocaleString('pl-PL')+' km':'-'}</b></div>
-          <div><small>Paliwo przy pobraniu</small><b>${Number(k.rozpoczecie_paliwo||0)}%</b></div>
-          <div><small>Paliwo przy zdaniu</small><b>${k.zakonczenie_paliwo!==null&&k.zakonczenie_paliwo!==undefined?Number(k.zakonczenie_paliwo)+'%':'-'}</b></div>
-          <div><small>Uszkodzenia</small><b>${k.uszkodzenia?'Tak':'Nie'}</b></div>
-          <div><small>Status</small><b>${escapeHtml(k.status||'-')}</b></div>
-        </div>
-        <div class="vehicle-history-note"><b>Uwagi przy pobraniu:</b><br>${escapeHtml(k.uwagi_pobrania||'-')}</div>
-        <div class="vehicle-history-note"><b>Uwagi przy zwrocie:</b><br>${escapeHtml(k.uwagi_zwrotu||'-')}</div>
-        <div class="vehicle-history-note"><b>Uwagi uszkodzeń:</b><br>${escapeHtml(k.uwagi_uszkodzenia||'-')}</div>
-      </div>
-    </div>
-  `);
-};
-
-window.closeVehicleModal = function(id){
-  document.getElementById(id)?.remove();
-};
-
-function renderPojazdyLista(){
- const box=document.getElementById('pojazdyLista');if(!box)return;
- const search=ensureVehicleSearchBox();
- let list=[...(window.pojazdyLista||[])].sort((a,b)=>vehicleStatusOrder(a.status)-vehicleStatusOrder(b.status)||vehicleCleanKrypton(a.krypton).localeCompare(vehicleCleanKrypton(b.krypton),'pl',{numeric:true}));
- const q=(search?.value||'').toLowerCase();
- if(q)list=list.filter(v=>`${v.marka||''} ${v.model||''} ${v.krypton||''} ${v.numer_rejestracyjny||''} ${v.status||''}`.toLowerCase().includes(q));
- box.innerHTML=`<div class="vehicle-table-wrap vehicle-table-centered"><table class="vehicle-table"><thead><tr><th>Status</th><th>Kryptonim</th><th>Pojazd</th><th>Nr rej.</th><th>Przebieg</th><th>Paliwo</th><th>Akcja</th></tr></thead><tbody>
- ${list.map(v=>`<tr><td>${vehicleStatusBadge(v.status)}</td><td><b>${escapeHtml(vehicleCleanKrypton(v.krypton))}</b></td><td>${escapeHtml((v.marka||'')+' '+(v.model||''))}</td><td>${escapeHtml(v.numer_rejestracyjny||'')}</td><td>${Number(v.aktualny_przebieg||0).toLocaleString('pl-PL')} km</td><td>${Number(v.aktualne_paliwo||0)}%</td><td><button type="button" class="btn-light" onclick="openVehicleDetails(${v.id})">Szczegóły</button> ${vehicleRoleCanViewHistory()?`<button type="button" class="btn-light" onclick="openVehicleHistory(${v.id})">Historia</button>`:''}</td></tr>`).join('')||'<tr><td colspan="7">Brak pojazdów.</td></tr>'}
- </tbody></table></div>`;
-}
-
-/* SWD - edycja i usuwanie pojazdów przez dowódcę/zastępcę/admina */
-function vehicleCanManageFleet(){
-  return ['admin','dowodca','zastepca'].includes(currentProfile?.rola);
-}
-
-async function deleteVehicle(id){
-  if(!vehicleCanManageFleet())return alert('Pojazdy może usuwać tylko dowódca, zastępca lub administrator.');
-
-  const {data:active}=await supabaseClient
-    .from('karty_pojazdow')
-    .select('id')
-    .eq('pojazd_id',id)
-    .eq('aktywna',true)
-    .limit(1);
-
-  if(active && active.length){
-    return alert('Nie można usunąć pojazdu, który jest aktualnie w patrolu.');
+(function(){
+  function esc(v){
+    return String(v ?? '').replace(/[&<>"']/g,s=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[s]));
   }
 
-  if(!confirm('Na pewno usunąć pojazd? Historia pobrań zostanie w bazie.'))return;
-
-  const {error}=await supabaseClient.from('pojazdy').delete().eq('id',id);
-  if(error)return alert(error.message);
-
-  await loadPojazdySystem();
-}
-
-function editVehicleFromTable(id){
-  if(!vehicleCanManageFleet())return alert('Pojazdy może edytować tylko dowódca, zastępca lub administrator.');
-  if(typeof prefillEditPojazd === 'function'){
-    prefillEditPojazd(id);
-    document.getElementById('pojazdMarka')?.scrollIntoView({behavior:'smooth',block:'center'});
+  function cleanKrypton(k){
+    return String(k || '').replace(/^OPP[\s\-_/]*/i,'').trim();
   }
-}
 
-function renderPojazdyLista(){
- const box=document.getElementById('pojazdyLista');if(!box)return;
- const search=ensureVehicleSearchBox();
- let list=[...(window.pojazdyLista||[])].sort((a,b)=>vehicleStatusOrder(a.status)-vehicleStatusOrder(b.status)||vehicleCleanKrypton(a.krypton).localeCompare(vehicleCleanKrypton(b.krypton),'pl',{numeric:true}));
- const q=(search?.value||'').toLowerCase();
- if(q)list=list.filter(v=>`${v.marka||''} ${v.model||''} ${v.krypton||''} ${v.numer_rejestracyjny||''} ${v.status||''}`.toLowerCase().includes(q));
+  function canViewHistory(){
+    return ['admin','dowodca','zastepca'].includes(window.currentProfile?.rola);
+  }
 
- box.innerHTML=`<div class="vehicle-table-wrap vehicle-table-centered">
-  <table class="vehicle-table">
-    <thead>
-      <tr>
-        <th>Status</th>
-        <th>Kryptonim</th>
-        <th>Pojazd</th>
-        <th>Nr rej.</th>
-        <th>Przebieg</th>
-        <th>Paliwo</th>
-        <th>Akcja</th>
+  function canManage(){
+    return ['admin','dowodca','zastepca'].includes(window.currentProfile?.rola);
+  }
+
+  async function getVehicle(id){
+    let v=(window.pojazdyLista||[]).find(x=>String(x.id)===String(id));
+    if(v)return v;
+
+    const {data,error}=await supabaseClient.from('pojazdy').select('*').eq('id',id).single();
+    if(error){
+      alert(error.message);
+      return null;
+    }
+    return data;
+  }
+
+  async function details(id){
+    const v=await getVehicle(id);
+    if(!v)return;
+
+    document.getElementById('vehicleDetailsModal')?.remove();
+
+    document.body.insertAdjacentHTML('beforeend',`
+      <div class="vehicle-modal-backdrop" id="vehicleDetailsModal">
+        <div class="vehicle-modal">
+          <div class="vehicle-modal-head">
+            <h3>Szczegóły pojazdu</h3>
+            <button type="button" class="btn-light" data-vh-close="vehicleDetailsModal">Zamknij</button>
+          </div>
+
+          <div class="vehicle-details-grid">
+            <div><small>Marka</small><b>${esc(v.marka||'-')}</b></div>
+            <div><small>Model</small><b>${esc(v.model||'-')}</b></div>
+            <div><small>Kryptonim</small><b>${esc(cleanKrypton(v.krypton))}</b></div>
+            <div><small>Numer rejestracyjny</small><b>${esc(v.numer_rejestracyjny||'-')}</b></div>
+            <div><small>Aktualny przebieg</small><b>${Number(v.aktualny_przebieg||0).toLocaleString('pl-PL')} km</b></div>
+            <div><small>Poziom paliwa</small><b>${Number(v.aktualne_paliwo||0)}%</b></div>
+          </div>
+
+          <div class="action-row">
+            ${canViewHistory()?`<button type="button" class="btn-primary" data-vh-history="${v.id}">📋 Historia pobrań</button>`:''}
+          </div>
+        </div>
+      </div>
+    `);
+  }
+
+  async function history(id){
+    if(!canViewHistory())return alert('Historię może sprawdzić tylko dowódca, zastępca lub administrator.');
+
+    const v=await getVehicle(id);
+    if(!v)return;
+
+    const {data,error}=await supabaseClient
+      .from('karty_pojazdow')
+      .select('*')
+      .eq('pojazd_id',id)
+      .order('created_at',{ascending:false})
+      .limit(200);
+
+    if(error)return alert(error.message);
+
+    document.getElementById('vehicleHistoryModal')?.remove();
+
+    const rows=(data||[]).map(k=>`
+      <tr class="vehicle-history-row" data-vh-entry="${k.id}">
+        <td>${esc(k.rozpoczecie_data||String(k.created_at||'').slice(0,10)||'-')}</td>
+        <td>${esc(k.rozpoczecie_pobierajacy||k.created_by||'-')}</td>
+        <td>${esc(k.rozpoczecie_godzina||'-')}</td>
+        <td>${esc(k.zakonczenie_godzina||'-')}</td>
+        <td>${Number(k.rozpoczecie_przebieg||0).toLocaleString('pl-PL')}</td>
+        <td>${k.zakonczenie_przebieg?Number(k.zakonczenie_przebieg).toLocaleString('pl-PL'):'-'}</td>
+        <td>${esc(k.status||'')}</td>
       </tr>
-    </thead>
-    <tbody>
-      ${list.map(v=>`
-        <tr>
-          <td>${vehicleStatusBadge(v.status)}</td>
-          <td><b>${escapeHtml(vehicleCleanKrypton(v.krypton))}</b></td>
-          <td>${escapeHtml((v.marka||'')+' '+(v.model||''))}</td>
-          <td>${escapeHtml(v.numer_rejestracyjny||'')}</td>
-          <td>${Number(v.aktualny_przebieg||0).toLocaleString('pl-PL')} km</td>
-          <td>${Number(v.aktualne_paliwo||0)}%</td>
-          <td class="vehicle-actions">
-            <button type="button" class="btn-light" onclick="openVehicleDetails(${v.id})">Szczegóły</button>
-            ${vehicleRoleCanViewHistory()?`<button type="button" class="btn-light" onclick="openVehicleHistory(${v.id})">Historia</button>`:''}
-            ${vehicleCanManageFleet()?`<button type="button" class="btn-light" onclick="editVehicleFromTable(${v.id})">Edytuj</button><button type="button" class="btn-danger" onclick="deleteVehicle(${v.id})">Usuń</button>`:''}
-          </td>
-        </tr>
-      `).join('')||'<tr><td colspan="7">Brak pojazdów.</td></tr>'}
-    </tbody>
-  </table>
- </div>`;
-}
+    `).join('');
 
-window.deleteVehicle = deleteVehicle;
-window.editVehicleFromTable = editVehicleFromTable;
+    document.body.insertAdjacentHTML('beforeend',`
+      <div class="vehicle-modal-backdrop" id="vehicleHistoryModal">
+        <div class="vehicle-modal vehicle-modal-wide">
+          <div class="vehicle-modal-head">
+            <h3>Historia pobrań — ${esc((v.marka||'')+' '+(v.model||''))} | ${esc(cleanKrypton(v.krypton))}</h3>
+            <button type="button" class="btn-light" data-vh-close="vehicleHistoryModal">Zamknij</button>
+          </div>
 
-/* SWD - FIX v5: Szczegóły/Historia przez event listener, bez inline onclick */
-
-function swdVehicleFind(id){
-  return (window.pojazdyLista || []).find(v => String(v.id) === String(id));
-}
-
-function swdVehicleDetailsHtml(v){
-  return `
-    <div class="vehicle-modal-backdrop" id="vehicleDetailsModal">
-      <div class="vehicle-modal">
-        <div class="vehicle-modal-head">
-          <h3>Szczegóły pojazdu</h3>
-          <button type="button" class="btn-light" data-veh-close="vehicleDetailsModal">Zamknij</button>
-        </div>
-        <div class="vehicle-details-grid">
-          <div><small>Marka</small><b>${escapeHtml(v.marka||'-')}</b></div>
-          <div><small>Model</small><b>${escapeHtml(v.model||'-')}</b></div>
-          <div><small>Kryptonim</small><b>${escapeHtml(vehicleCleanKrypton(v.krypton))}</b></div>
-          <div><small>Numer rejestracyjny</small><b>${escapeHtml(v.numer_rejestracyjny||'-')}</b></div>
-          <div><small>Aktualny przebieg</small><b>${Number(v.aktualny_przebieg||0).toLocaleString('pl-PL')} km</b></div>
-          <div><small>Poziom paliwa</small><b>${Number(v.aktualne_paliwo||0)}%</b></div>
-        </div>
-        <div class="action-row">
-          ${vehicleRoleCanViewHistory()?`<button type="button" class="btn-primary" data-veh-history="${v.id}">📋 Historia pobrań</button>`:''}
+          <div class="vehicle-table-wrap">
+            <table class="vehicle-table">
+              <thead>
+                <tr>
+                  <th>Data</th>
+                  <th>Funkcjonariusz</th>
+                  <th>Pobranie</th>
+                  <th>Zdanie</th>
+                  <th>Przebieg start</th>
+                  <th>Przebieg koniec</th>
+                  <th>Status</th>
+                </tr>
+              </thead>
+              <tbody>${rows || '<tr><td colspan="7">Brak historii pobrań.</td></tr>'}</tbody>
+            </table>
+          </div>
         </div>
       </div>
-    </div>
-  `;
-}
-
-async function swdOpenVehicleDetailsSafe(id){
-  let v = swdVehicleFind(id);
-  if(!v){
-    const res = await supabaseClient.from('pojazdy').select('*').eq('id',id).single();
-    if(res.error)return alert(res.error.message);
-    v = res.data;
-  }
-  document.getElementById('vehicleDetailsModal')?.remove();
-  document.body.insertAdjacentHTML('beforeend', swdVehicleDetailsHtml(v));
-}
-
-async function swdOpenVehicleHistorySafe(id){
-  if(!vehicleRoleCanViewHistory())return alert('Historię może sprawdzić tylko dowódca, zastępca lub administrator.');
-
-  let v = swdVehicleFind(id);
-  if(!v){
-    const vr = await supabaseClient.from('pojazdy').select('*').eq('id',id).single();
-    if(vr.error)return alert(vr.error.message);
-    v = vr.data;
+    `);
   }
 
-  const {data,error}=await supabaseClient.from('karty_pojazdow').select('*').eq('pojazd_id',id).order('created_at',{ascending:false}).limit(200);
-  if(error)return alert(error.message);
+  async function entry(id){
+    const {data:k,error}=await supabaseClient.from('karty_pojazdow').select('*').eq('id',id).single();
+    if(error)return alert(error.message);
 
-  const rows=(data||[]).map(k=>`
-    <tr class="vehicle-history-row" data-veh-entry="${k.id}">
-      <td>${escapeHtml(k.rozpoczecie_data||String(k.created_at||'').slice(0,10)||'-')}</td>
-      <td>${escapeHtml(k.rozpoczecie_pobierajacy||k.created_by||'-')}</td>
-      <td>${escapeHtml(k.rozpoczecie_godzina||'-')}</td>
-      <td>${escapeHtml(k.zakonczenie_godzina||'-')}</td>
-      <td>${Number(k.rozpoczecie_przebieg||0).toLocaleString('pl-PL')}</td>
-      <td>${k.zakonczenie_przebieg?Number(k.zakonczenie_przebieg).toLocaleString('pl-PL'):'-'}</td>
-      <td>${escapeHtml(k.status||'')}</td>
-    </tr>
-  `).join('');
+    document.getElementById('vehicleHistoryEntryModal')?.remove();
 
-  document.getElementById('vehicleHistoryModal')?.remove();
-  document.body.insertAdjacentHTML('beforeend',`
-    <div class="vehicle-modal-backdrop" id="vehicleHistoryModal">
-      <div class="vehicle-modal vehicle-modal-wide">
-        <div class="vehicle-modal-head">
-          <h3>Historia pobrań — ${escapeHtml((v.marka||'')+' '+(v.model||''))} | ${escapeHtml(vehicleCleanKrypton(v.krypton))}</h3>
-          <button type="button" class="btn-light" data-veh-close="vehicleHistoryModal">Zamknij</button>
-        </div>
-        <div class="vehicle-table-wrap">
-          <table class="vehicle-table">
-            <thead><tr><th>Data</th><th>Funkcjonariusz</th><th>Pobranie</th><th>Zdanie</th><th>Przebieg start</th><th>Przebieg koniec</th><th>Status</th></tr></thead>
-            <tbody>${rows||'<tr><td colspan="7">Brak historii pobrań.</td></tr>'}</tbody>
-          </table>
+    document.body.insertAdjacentHTML('beforeend',`
+      <div class="vehicle-modal-backdrop" id="vehicleHistoryEntryModal">
+        <div class="vehicle-modal">
+          <div class="vehicle-modal-head">
+            <h3>Szczegóły pobrania</h3>
+            <button type="button" class="btn-light" data-vh-close="vehicleHistoryEntryModal">Zamknij</button>
+          </div>
+
+          <div class="vehicle-details-grid">
+            <div><small>Pojazd</small><b>${esc(k.pojazd||'-')}</b></div>
+            <div><small>Kryptonim</small><b>${esc(cleanKrypton(k.krypton))}</b></div>
+            <div><small>Pobrał</small><b>${esc(k.rozpoczecie_pobierajacy||k.created_by||'-')}</b></div>
+            <div><small>Data</small><b>${esc(k.rozpoczecie_data||'-')}</b></div>
+            <div><small>Godzina pobrania</small><b>${esc(k.rozpoczecie_godzina||'-')}</b></div>
+            <div><small>Godzina zdania</small><b>${esc(k.zakonczenie_godzina||'-')}</b></div>
+            <div><small>Przebieg start</small><b>${Number(k.rozpoczecie_przebieg||0).toLocaleString('pl-PL')} km</b></div>
+            <div><small>Przebieg koniec</small><b>${k.zakonczenie_przebieg?Number(k.zakonczenie_przebieg).toLocaleString('pl-PL')+' km':'-'}</b></div>
+            <div><small>Paliwo przy pobraniu</small><b>${Number(k.rozpoczecie_paliwo||0)}%</b></div>
+            <div><small>Paliwo przy zdaniu</small><b>${k.zakonczenie_paliwo!==null&&k.zakonczenie_paliwo!==undefined?Number(k.zakonczenie_paliwo)+'%':'-'}</b></div>
+            <div><small>Uszkodzenia</small><b>${k.uszkodzenia?'Tak':'Nie'}</b></div>
+            <div><small>Status</small><b>${esc(k.status||'-')}</b></div>
+          </div>
+
+          <div class="vehicle-history-note"><b>Uwagi przy pobraniu:</b><br>${esc(k.uwagi_pobrania||'-')}</div>
+          <div class="vehicle-history-note"><b>Uwagi przy zwrocie:</b><br>${esc(k.uwagi_zwrotu||'-')}</div>
+          <div class="vehicle-history-note"><b>Uwagi uszkodzeń:</b><br>${esc(k.uwagi_uszkodzenia||'-')}</div>
         </div>
       </div>
-    </div>
-  `);
-}
+    `);
+  }
 
-async function swdOpenVehicleHistoryEntrySafe(id){
-  const {data:k,error}=await supabaseClient.from('karty_pojazdow').select('*').eq('id',id).single();
-  if(error)return alert(error.message);
-  document.getElementById('vehicleHistoryEntryModal')?.remove();
-  document.body.insertAdjacentHTML('beforeend',`
-    <div class="vehicle-modal-backdrop" id="vehicleHistoryEntryModal">
-      <div class="vehicle-modal">
-        <div class="vehicle-modal-head">
-          <h3>Szczegóły pobrania</h3>
-          <button type="button" class="btn-light" data-veh-close="vehicleHistoryEntryModal">Zamknij</button>
-        </div>
-        <div class="vehicle-details-grid">
-          <div><small>Pojazd</small><b>${escapeHtml(k.pojazd||'-')}</b></div>
-          <div><small>Kryptonim</small><b>${escapeHtml(vehicleCleanKrypton(k.krypton))}</b></div>
-          <div><small>Pobrał</small><b>${escapeHtml(k.rozpoczecie_pobierajacy||k.created_by||'-')}</b></div>
-          <div><small>Data</small><b>${escapeHtml(k.rozpoczecie_data||'-')}</b></div>
-          <div><small>Godzina pobrania</small><b>${escapeHtml(k.rozpoczecie_godzina||'-')}</b></div>
-          <div><small>Godzina zdania</small><b>${escapeHtml(k.zakonczenie_godzina||'-')}</b></div>
-          <div><small>Przebieg start</small><b>${Number(k.rozpoczecie_przebieg||0).toLocaleString('pl-PL')} km</b></div>
-          <div><small>Przebieg koniec</small><b>${k.zakonczenie_przebieg?Number(k.zakonczenie_przebieg).toLocaleString('pl-PL')+' km':'-'}</b></div>
-          <div><small>Paliwo przy pobraniu</small><b>${Number(k.rozpoczecie_paliwo||0)}%</b></div>
-          <div><small>Paliwo przy zdaniu</small><b>${k.zakonczenie_paliwo!==null&&k.zakonczenie_paliwo!==undefined?Number(k.zakonczenie_paliwo)+'%':'-'}</b></div>
-          <div><small>Uszkodzenia</small><b>${k.uszkodzenia?'Tak':'Nie'}</b></div>
-          <div><small>Status</small><b>${escapeHtml(k.status||'-')}</b></div>
-        </div>
-        <div class="vehicle-history-note"><b>Uwagi przy pobraniu:</b><br>${escapeHtml(k.uwagi_pobrania||'-')}</div>
-        <div class="vehicle-history-note"><b>Uwagi przy zwrocie:</b><br>${escapeHtml(k.uwagi_zwrotu||'-')}</div>
-        <div class="vehicle-history-note"><b>Uwagi uszkodzeń:</b><br>${escapeHtml(k.uwagi_uszkodzenia||'-')}</div>
-      </div>
-    </div>
-  `);
-}
+  async function removeVehicle(id){
+    if(!canManage())return alert('Pojazdy może usuwać tylko dowódca, zastępca lub administrator.');
 
-/* Nadpisanie renderowania: przyciski z data-action zamiast onclick */
-function renderPojazdyLista(){
- const box=document.getElementById('pojazdyLista');if(!box)return;
- const search=typeof ensureVehicleSearchBox==='function' ? ensureVehicleSearchBox() : null;
- let list=[...(window.pojazdyLista||[])].sort((a,b)=>vehicleStatusOrder(a.status)-vehicleStatusOrder(b.status)||vehicleCleanKrypton(a.krypton).localeCompare(vehicleCleanKrypton(b.krypton),'pl',{numeric:true}));
- const q=(search?.value||'').toLowerCase();
- if(q)list=list.filter(v=>`${v.marka||''} ${v.model||''} ${v.krypton||''} ${v.numer_rejestracyjny||''} ${v.status||''}`.toLowerCase().includes(q));
+    const {data:active}=await supabaseClient.from('karty_pojazdow').select('id').eq('pojazd_id',id).eq('aktywna',true).limit(1);
+    if(active && active.length)return alert('Nie można usunąć pojazdu, który jest aktualnie w patrolu.');
 
- box.innerHTML=`<div class="vehicle-table-wrap vehicle-table-centered">
-  <table class="vehicle-table">
-    <thead><tr><th>Status</th><th>Kryptonim</th><th>Pojazd</th><th>Nr rej.</th><th>Przebieg</th><th>Paliwo</th><th>Akcja</th></tr></thead>
-    <tbody>
-      ${list.map(v=>`
-        <tr>
-          <td>${vehicleStatusBadge(v.status)}</td>
-          <td><b>${escapeHtml(vehicleCleanKrypton(v.krypton))}</b></td>
-          <td>${escapeHtml((v.marka||'')+' '+(v.model||''))}</td>
-          <td>${escapeHtml(v.numer_rejestracyjny||'')}</td>
-          <td>${Number(v.aktualny_przebieg||0).toLocaleString('pl-PL')} km</td>
-          <td>${Number(v.aktualne_paliwo||0)}%</td>
-          <td class="vehicle-actions">
-            <button type="button" class="btn-light" data-veh-details="${v.id}">Szczegóły</button>
-            ${vehicleRoleCanViewHistory()?`<button type="button" class="btn-light" data-veh-history="${v.id}">Historia</button>`:''}
-            ${typeof vehicleCanManageFleet==='function' && vehicleCanManageFleet()?`<button type="button" class="btn-light" data-veh-edit="${v.id}">Edytuj</button><button type="button" class="btn-danger" data-veh-delete="${v.id}">Usuń</button>`:''}
-          </td>
-        </tr>
-      `).join('')||'<tr><td colspan="7">Brak pojazdów.</td></tr>'}
-    </tbody>
-  </table>
- </div>`;
-}
+    if(!confirm('Na pewno usunąć pojazd? Historia pobrań zostanie w bazie.'))return;
 
-/* Jeden listener na cały dokument — działa nawet jeśli onclick jest blokowany */
-if(!window._swdVehicleClickListener){
-  window._swdVehicleClickListener=true;
-  document.addEventListener('click', async function(e){
-    const btn=e.target.closest('[data-veh-details],[data-veh-history],[data-veh-entry],[data-veh-close],[data-veh-edit],[data-veh-delete]');
-    if(!btn)return;
+    const {error}=await supabaseClient.from('pojazdy').delete().eq('id',id);
+    if(error)return alert(error.message);
 
-    e.preventDefault();
-    e.stopPropagation();
+    if(typeof loadPojazdySystem === 'function')await loadPojazdySystem();
+  }
 
-    if(btn.dataset.vehDetails)return swdOpenVehicleDetailsSafe(btn.dataset.vehDetails);
-    if(btn.dataset.vehHistory)return swdOpenVehicleHistorySafe(btn.dataset.vehHistory);
-    if(btn.dataset.vehEntry)return swdOpenVehicleHistoryEntrySafe(btn.dataset.vehEntry);
-    if(btn.dataset.vehClose)return document.getElementById(btn.dataset.vehClose)?.remove();
-    if(btn.dataset.vehEdit && typeof editVehicleFromTable==='function')return editVehicleFromTable(btn.dataset.vehEdit);
-    if(btn.dataset.vehDelete && typeof deleteVehicle==='function')return deleteVehicle(btn.dataset.vehDelete);
-  }, true);
-}
+  function editVehicle(id){
+    if(!canManage())return alert('Pojazdy może edytować tylko dowódca, zastępca lub administrator.');
+    if(typeof prefillEditPojazd === 'function'){
+      prefillEditPojazd(id);
+      document.getElementById('pojazdMarka')?.scrollIntoView({behavior:'smooth',block:'center'});
+    }
+  }
 
-window.openVehicleDetails=swdOpenVehicleDetailsSafe;
-window.openVehicleHistory=swdOpenVehicleHistorySafe;
-window.openVehicleHistoryEntry=swdOpenVehicleHistoryEntrySafe;
+  function patchVehicleButtons(){
+    const area=document.getElementById('pojazdyLista');
+    if(!area)return;
+
+    const rows=area.querySelectorAll('tbody tr');
+    rows.forEach(tr=>{
+      const btns=tr.querySelectorAll('button');
+      const text=[...tr.children].map(td=>td.textContent.trim()).join(' ');
+      const vehicle=(window.pojazdyLista||[]).find(v=>{
+        return text.includes(String(v.numer_rejestracyjny||'')) || text.includes(String(v.id||'__missing__'));
+      });
+
+      if(!vehicle)return;
+
+      btns.forEach(btn=>{
+        const t=btn.textContent.trim().toLowerCase();
+        btn.type='button';
+        btn.removeAttribute('onclick');
+
+        if(t.includes('szczeg')){
+          btn.dataset.vhDetails=vehicle.id;
+        }else if(t.includes('historia')){
+          btn.dataset.vhHistory=vehicle.id;
+        }else if(t.includes('edytuj')){
+          btn.dataset.vhEdit=vehicle.id;
+        }else if(t.includes('usuń') || t.includes('usun')){
+          btn.dataset.vhDelete=vehicle.id;
+        }
+      });
+    });
+  }
+
+  // Nadpisuje renderowanie tylko delikatnie: po każdym renderze poprawia przyciski.
+  const timer=setInterval(patchVehicleButtons,700);
+
+  if(!window._swdVehiclesHotfixListener){
+    window._swdVehiclesHotfixListener=true;
+
+    document.addEventListener('click', function(e){
+      const el=e.target.closest('[data-vh-details],[data-vh-history],[data-vh-entry],[data-vh-close],[data-vh-edit],[data-vh-delete]');
+      if(!el)return;
+
+      e.preventDefault();
+      e.stopPropagation();
+
+      if(el.dataset.vhDetails)return details(el.dataset.vhDetails);
+      if(el.dataset.vhHistory)return history(el.dataset.vhHistory);
+      if(el.dataset.vhEntry)return entry(el.dataset.vhEntry);
+      if(el.dataset.vhClose)return document.getElementById(el.dataset.vhClose)?.remove();
+      if(el.dataset.vhEdit)return editVehicle(el.dataset.vhEdit);
+      if(el.dataset.vhDelete)return removeVehicle(el.dataset.vhDelete);
+    }, true);
+  }
+
+  window.openVehicleDetails=details;
+  window.openVehicleHistory=history;
+  window.openVehicleHistoryEntry=entry;
+  window.deleteVehicle=removeVehicle;
+  window.editVehicleFromTable=editVehicle;
+})();
