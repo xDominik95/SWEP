@@ -389,97 +389,19 @@ function templatePZD(){
   </div>`;
 }
 
-
-/* === SWD 2.2 STABILNE: numeracja i podpis === */
-
-function swdOfficerSignature(){
-  const custom = (currentProfile?.podpis || '').trim();
-  const email = currentUser?.email || currentProfile?.email || '';
-  const name = (currentProfile?.imie_nazwisko || '').trim();
-  if(custom) return custom;
-  if(name && name !== email) return name;
-  return 'podpis funkcjonariusza';
-}
-
-function swdOfficerNameOnly(){
-  return swdOfficerSignature();
-}
-
-function swdDocNumberLabel(number){
-  return `<div class="swd-doc-number">Nr dokumentu: <b>${policeEsc(number || 'nadany przy zapisie')}</b></div>`;
-}
-
-function attachDocNumberToHtml(html, number){
-  if(!html) return html;
-  if(html.includes('class="swd-doc-number"')){
-    return html.replace(/<div class="swd-doc-number">.*?<\/div>/, swdDocNumberLabel(number));
-  }
-  return html.replace(/(<div class="[^"]*police-document[^"]*"[^>]*>)/, `$1${swdDocNumberLabel(number)}`);
-}
-
-async function policeGenerateNumber(type){
-  const {data,error}=await supabaseClient.from('numeracja_dokumentow').select('*').eq('typ',type).single();
-  const year = new Date().getFullYear();
-  const meta = POLICE_DOC_META[type] || {prefix:'DOC'};
-
-  if(error || !data){
-    return `${meta.prefix}/${String(Date.now()).slice(-4)}/${year}`;
-  }
-
-  const next = data.rok !== year ? 1 : Number(data.ostatni_numer || 0) + 1;
-
-  await supabaseClient
-    .from('numeracja_dokumentow')
-    .update({rok:year, ostatni_numer:next})
-    .eq('typ',type);
-
-  return `${data.prefix}/${String(next).padStart(4,'0')}/${year}`;
-}
-
-function signatureBlock(label='sporządzający dokument'){
-  return `
-    <div class="swd-signature-block">
-      <div class="swd-signature-label">${label}</div>
-      <div class="swd-hand-signature">${policeEsc(swdOfficerSignature())}</div>
-      <div class="swd-signature-caption">(podpis funkcjonariusza)</div>
-    </div>
-  `;
-}
-
-async function policeDocSave(){
-  const type=document.getElementById('policeDocType')?.value||policeDocCurrent;
-  const meta=POLICE_DOC_META[type];
-  const doc=document.querySelector('.police-document');
-  if(!doc)return alert('Brak dokumentu.');
-
-  const number=await policeGenerateNumber(type);
-  const html=attachDocNumberToHtml(doc.outerHTML, number);
-
-  const row={
-    status:'zapisany',
-    typ_dokumentu:type,
-    tytul:meta.title,
-    numer_dokumentu:number,
-    funkcjonariusz:currentProfile?.imie_nazwisko || currentProfile?.login_name || currentUser?.email,
-    stopien:currentProfile?.stopien || '',
-    numer_sluzbowy:currentProfile?.numer_sluzbowy || '',
-    tresc:{
-      html,
-      plainText:doc.innerText.slice(0,4000),
-      template:'policyjny-v2.2',
-      podpis:swdOfficerSignature()
-    }
-  };
-
-  const {error}=await supabaseClient.from('dokumenty').insert(row);
-  const m=document.getElementById('policeDocMsg');
-
-  if(error){
-    if(m){m.textContent=error.message;m.style.color='#b00020'}
-    return;
-  }
-
-  if(m){m.textContent=`Dokument zapisany. Numer: ${number}`;m.style.color='#187a2f'}
-  policeDocRender();
-  policeDocLoadMine();
-}
+/* SWD 2.3 - dokumenty: cudze dokumenty dla dowództwa, usuwanie, poprawny podgląd/PDF */
+function swdDocCanManage(){return ['admin','dowodca','zastepca'].includes(currentProfile?.rola)}
+function swdCurrentOfficerName(){return currentProfile?.imie_nazwisko||currentProfile?.login_name||currentUser?.email||''}
+function swdOfficerSignature(){const custom=(currentProfile?.podpis||'').trim();const email=currentUser?.email||currentProfile?.email||'';const name=(currentProfile?.imie_nazwisko||'').trim();if(custom)return custom;if(name&&name!==email)return name;return 'podpis funkcjonariusza'}
+function swdOfficerNameOnly(){return swdOfficerSignature()}
+function signatureBlock(label='sporządzający dokument'){return `<div class="swd-signature-block"><div class="swd-signature-label">${label}</div><div class="swd-hand-signature">${policeEsc(swdOfficerSignature())}</div><div class="swd-signature-caption">(podpis funkcjonariusza)</div></div>`}
+function swdDocNumberLabel(number){return `<div class="swd-doc-number">Nr dokumentu: <b>${policeEsc(number||'nadany przy zapisie')}</b></div>`}
+function attachDocNumberToHtml(html,number){if(!html)return html;if(html.includes('class="swd-doc-number"'))return html.replace(/<div class="swd-doc-number">.*?<\/div>/,swdDocNumberLabel(number));return html.replace(/(<div class="[^"]*police-document[^"]*"[^>]*>)/,`$1${swdDocNumberLabel(number)}`)}
+async function policeGenerateNumber(type){const {data,error}=await supabaseClient.from('numeracja_dokumentow').select('*').eq('typ',type).single();const year=new Date().getFullYear();const meta=POLICE_DOC_META[type]||{prefix:'DOC'};if(error||!data)return `${meta.prefix}/${String(Date.now()).slice(-4)}/${year}`;const next=data.rok!==year?1:Number(data.ostatni_numer||0)+1;await supabaseClient.from('numeracja_dokumentow').update({rok:year,ostatni_numer:next}).eq('typ',type);return `${data.prefix}/${String(next).padStart(4,'0')}/${year}`}
+function templateNotatka(title){return `<div class="police-a4 police-document police-note-document" data-doc-title="${policeEsc(title)}"><div class="police-top"><div style="width:260px"><div class="nu-line" contenteditable="true" style="width:220px"></div><div class="nu-line" contenteditable="true" style="width:220px"></div></div><div>Kraków, dn. ${ce('130px')}</div></div><h2>${policeEsc(title)}</h2>${Array.from({length:24}).map(longLine).join('')}${signatureBlock('sporządził')}</div>`}
+async function policeDocSave(){const type=document.getElementById('policeDocType')?.value||policeDocCurrent;const meta=POLICE_DOC_META[type];const doc=document.querySelector('.police-document');if(!doc)return alert('Brak dokumentu.');const number=await policeGenerateNumber(type);const html=attachDocNumberToHtml(doc.outerHTML,number);const row={status:'zapisany',typ_dokumentu:type,tytul:meta.title,numer_dokumentu:number,funkcjonariusz:swdCurrentOfficerName(),stopien:currentProfile?.stopien||'',numer_sluzbowy:currentProfile?.numer_sluzbowy||'',tresc:{html,plainText:doc.innerText.slice(0,4000),template:'policyjny-v2.3',podpis:swdOfficerSignature()}};const {error}=await supabaseClient.from('dokumenty').insert(row);const m=document.getElementById('policeDocMsg');if(error){if(m){m.textContent=error.message;m.style.color='#b00020'}return}if(m){m.textContent=`Dokument zapisany. Numer: ${number}`;m.style.color='#187a2f'}policeDocRender();policeDocLoadMine()}
+async function policeDocLoadMine(){const box=document.getElementById('myDocsList');if(!box||!currentProfile)return;let query=supabaseClient.from('dokumenty').select('*').is('deleted_at',null).order('created_at',{ascending:false}).limit(300);if(!swdDocCanManage())query=query.eq('funkcjonariusz',swdCurrentOfficerName());const {data,error}=await query;if(error){box.innerHTML=`<div class="empty">${policeEsc(error.message)}</div>`;return}box.innerHTML=(data||[]).map(d=>`<div class="list-item"><span class="status zapisany">${policeEsc(d.status||'zapisany')}</span><h4>${policeEsc(d.numer_dokumentu||'')} — ${policeEsc(d.tytul||'')}</h4><p><b>Autor:</b> ${policeEsc(d.stopien||'')} ${policeEsc(d.funkcjonariusz||'')}</p><p class="small"><b>Data:</b> ${policeEsc((d.created_at||'').slice(0,16).replace('T',' '))}</p><p>${policeEsc(d.tresc?.plainText||d.tresc?.opis||'').slice(0,450)}</p><div class="action-row"><button class="btn-light" onclick="policeDocOpen(${d.id})">Otwórz</button>${swdDocCanManage()?`<button class="btn-danger" onclick="policeDocDelete(${d.id})">Usuń dokument</button>`:''}</div></div>`).join('')||'<div class="empty">Brak dokumentów.</div>';if(typeof updateStats==='function')updateStats()}
+async function loadArchive(){const {data,error}=await supabaseClient.from('dokumenty').select('*').is('deleted_at',null).order('created_at',{ascending:false}).limit(300);const box=document.getElementById('archiveList');if(!box)return;if(error){box.innerHTML=error.message;return}const q=(document.getElementById('archiveSearch')?.value||'').toLowerCase();box.innerHTML=(data||[]).filter(d=>`${d.numer_dokumentu||''} ${d.tytul||''} ${d.funkcjonariusz||''} ${d.status||''}`.toLowerCase().includes(q)).map(d=>`<div class="list-item"><span class="status ${d.status}">${d.status||''}</span><h4>${d.numer_dokumentu||''} ${d.tytul||''}</h4><p>${d.funkcjonariusz||''}</p><div class="action-row"><button class="btn-light" onclick="policeDocOpen(${d.id})">Otwórz</button>${swdDocCanManage()?`<button class="btn-danger" onclick="policeDocDelete(${d.id})">Usuń dokument</button>`:''}</div></div>`).join('')||'<div class="empty">Brak wyników.</div>'}
+async function policeDocDelete(id){if(!swdDocCanManage())return alert('Dokumenty może usuwać tylko dowódca, zastępca lub administrator.');if(!confirm('Na pewno usunąć dokument? Trafi do kosza.'))return;const {error}=await supabaseClient.from('dokumenty').update({deleted_at:new Date().toISOString(),deleted_by:swdCurrentOfficerName(),status:'usuniety'}).eq('id',id);if(error)return alert(error.message);await policeDocLoadMine();if(typeof loadArchive==='function')await loadArchive();if(typeof loadTrash==='function')await loadTrash()}
+async function policeDocOpen(id){const {data,error}=await supabaseClient.from('dokumenty').select('*').eq('id',id).single();if(error)return alert(error.message);const content=data.tresc?.html||`<div class="police-a4 police-document"><h2>${policeEsc(data.tytul||'')}</h2><pre>${policeEsc(JSON.stringify(data.tresc||{},null,2))}</pre></div>`;const w=window.open('','_blank','width=950,height=950');const title=policeEsc(data.numer_dokumentu||'Dokument');const basePath=location.href.replace(/[^\/]*$/,'');w.document.write(`<!DOCTYPE html><html lang="pl"><head><meta charset="UTF-8"><title>${title}</title><link rel="stylesheet" href="${basePath}style.css"><script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"><\/script><style>body{background:#e9eef5;padding:20px;display:flex;flex-direction:column;align-items:center;font-family:Arial,sans-serif}.print-actions{margin-bottom:15px;display:flex;gap:8px}.print-actions button{padding:10px 14px;border:0;border-radius:8px;font-weight:800;cursor:pointer}@media print{body{background:#fff;padding:0}.print-actions{display:none}.police-document{box-shadow:none!important}}</style></head><body><div class="print-actions"><button onclick="window.print()">Drukuj</button><button onclick="html2pdf().set({margin:[0,0,0,0],filename:'${title}.pdf',image:{type:'jpeg',quality:.98},html2canvas:{scale:2,useCORS:true,scrollY:0},jsPDF:{unit:'mm',format:'a4',orientation:'portrait'},pagebreak:{mode:['css','legacy'],avoid:['.swd-signature-block','.signature-place']}}).from(document.querySelector('.police-document')).save()">PDF</button></div>${content}</body></html>`);w.document.close()}
+function policeDocPdf(){const el=document.querySelector('.police-document');if(!el)return alert('Brak dokumentu do PDF.');html2pdf().set({margin:[0,0,0,0],filename:(POLICE_DOC_META[policeDocCurrent]?.prefix||'dokument')+'.pdf',image:{type:'jpeg',quality:.98},html2canvas:{scale:2,useCORS:true,scrollY:0},jsPDF:{unit:'mm',format:'a4',orientation:'portrait'},pagebreak:{mode:['css','legacy'],avoid:['.swd-signature-block','.signature-place']}}).from(el).save()}
