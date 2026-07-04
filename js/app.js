@@ -436,53 +436,105 @@ function showPage(id,btn){
 }
 
 
-/* SWD 2.2 - własny podpis funkcjonariusza */
+
+/* === SWD 2.2 STABILNE: podpis funkcjonariusza bez zmiany logowania === */
+
 async function createOfficerAccount(){
   try{
-    if(!isCommander())return alert('Brak uprawnień.');
+    if(!isCommander()) return alert('Brak uprawnień.');
     await loadRankRates();
-    const name=swdText('newOfficerName');
-    const rank=swdText('newOfficerRank');
-    const badge=swdText('newOfficerBadge');
-    const signature=swdText('newOfficerSignature') || name;
-    const role=document.getElementById('newOfficerRole')?.value||'funkcjonariusz';
-    if(!name)return swdMsg('newOfficerMsg','Wpisz imię i nazwisko.',false);
-    if(!rank)return swdMsg('newOfficerMsg','Wybierz stopień.',false);
-    const loginBase=slugifyName(name);
-    let login=loginBase, email=`${login}@swd.local`;
-    const pin=generatePin();
-    const rate=getRateForRank(rank);
-    const {data:existing}=await supabaseClient.from('profile').select('login_name').eq('login_name',login).maybeSingle();
-    if(existing){login=`${loginBase}-${Math.floor(100+Math.random()*900)}`;email=`${login}@swd.local`;}
-    const row={id:crypto.randomUUID(),email,login_name:login,pin_code:pin,stopien:rank,imie_nazwisko:name,numer_sluzbowy:badge,podpis:signature,rola:role,stawka_godzinowa:rate,godziny_reset_at:new Date(0).toISOString()};
-    const {error}=await supabaseClient.from('profile').insert(row);
-    if(error){console.error(error);return swdMsg('newOfficerMsg',error.message,false)}
-    swdMsg('newOfficerMsg',`Konto utworzone. Login: ${login} | PIN: ${pin}`,true);
-    ['newOfficerName','newOfficerBadge','newOfficerSignature'].forEach(id=>{const el=document.getElementById(id);if(el)el.value=''});
-    const r=document.getElementById('newOfficerRank'); if(r)r.value='';
-    const roleEl=document.getElementById('newOfficerRole'); if(roleEl)roleEl.value='funkcjonariusz';
+
+    const name = swdText('newOfficerName');
+    const rank = swdText('newOfficerRank');
+    const badge = swdText('newOfficerBadge');
+    const signature = swdText('newOfficerSignature') || name;
+    const role = document.getElementById('newOfficerRole')?.value || 'funkcjonariusz';
+
+    if(!name) return swdMsg('newOfficerMsg','Wpisz imię i nazwisko.',false);
+    if(!rank) return swdMsg('newOfficerMsg','Wybierz stopień.',false);
+
+    const loginBase = slugifyName(name);
+    let login = loginBase;
+    let email = `${login}@swd.local`;
+    const pin = generatePin();
+    const rate = getRateForRank(rank);
+
+    const { data: existing } = await supabaseClient
+      .from('profile')
+      .select('login_name')
+      .eq('login_name', login)
+      .maybeSingle();
+
+    if(existing){
+      login = `${loginBase}-${Math.floor(100 + Math.random() * 900)}`;
+      email = `${login}@swd.local`;
+    }
+
+    const row = {
+      id: crypto.randomUUID(),
+      email,
+      login_name: login,
+      pin_code: pin,
+      stopien: rank,
+      imie_nazwisko: name,
+      numer_sluzbowy: badge,
+      podpis: signature,
+      rola: role,
+      stawka_godzinowa: rate,
+      godziny_reset_at: new Date(0).toISOString()
+    };
+
+    const { error } = await supabaseClient.from('profile').insert(row);
+
+    if(error){
+      console.error(error);
+      return swdMsg('newOfficerMsg', error.message, false);
+    }
+
+    swdMsg('newOfficerMsg', `Konto utworzone. Login: ${login} | PIN: ${pin}`, true);
+
+    ['newOfficerName','newOfficerBadge','newOfficerSignature'].forEach(id=>{
+      const el = document.getElementById(id);
+      if(el) el.value = '';
+    });
+    const rankEl = document.getElementById('newOfficerRank');
+    if(rankEl) rankEl.value = '';
+    const roleEl = document.getElementById('newOfficerRole');
+    if(roleEl) roleEl.value = 'funkcjonariusz';
+
     await loadProfiles();
-  }catch(err){console.error(err);swdMsg('newOfficerMsg',err.message||String(err),false)}
+  }catch(err){
+    console.error(err);
+    swdMsg('newOfficerMsg', err.message || String(err), false);
+  }
 }
+
 async function loadProfiles(){
   const {data,error}=await supabaseClient.from('profile').select('*').order('created_at',{ascending:false});
   const box=document.getElementById('profilesList');
   if(!box)return;
-  if(error){box.innerHTML=`<div class="empty">${error.message}</div>`;return}
+
+  if(error){
+    box.innerHTML=`<div class="empty">${error.message}</div>`;
+    return;
+  }
+
   await loadRankRates();
+
   box.innerHTML=(data||[]).map(p=>`
     <div class="list-item">
       <h4>${p.stopien||''} ${p.imie_nazwisko||p.login_name||p.email}</h4>
-      <p><b>Login:</b> ${p.login_name||'-'} | <b>PIN:</b> ${p.pin_code||'-'}</p>
-      <p><b>Stawka ze stopnia:</b> ${p.stawka_godzinowa||getRateForRank(p.stopien)||0} zł</p>
+      <p><b>Login:</b> ${p.login_name || '-'} | <b>PIN:</b> ${p.pin_code || '-'}</p>
+      <p><b>Stawka ze stopnia:</b> ${p.stawka_godzinowa || getRateForRank(p.stopien) || 0} zł</p>
       <p><b>Podpis:</b> <span class="swd-profile-sign-preview">${p.podpis || p.imie_nazwisko || '-'}</span></p>
+
       <div class="grid-4">
-        <input id="prof_name_${p.id}" value="${String(p.imie_nazwisko||'').replaceAll('"','&quot;')}" placeholder="Imię i nazwisko">
+        <input id="prof_name_${p.id}" value="${String(p.imie_nazwisko || '').replaceAll('"','&quot;')}" placeholder="Imię i nazwisko">
         <select class="profile-rank-select" id="prof_rank_${p.id}" onchange="applyRankRateToProfile('${p.id}')">
-          <option value="${p.stopien||''}">${p.stopien||'Wybierz stopień'}</option>
+          <option value="${p.stopien || ''}">${p.stopien || 'Wybierz stopień'}</option>
         </select>
-        <input id="prof_badge_${p.id}" value="${String(p.numer_sluzbowy||'').replaceAll('"','&quot;')}" placeholder="Numer służbowy">
-        <input id="prof_signature_${p.id}" value="${String(p.podpis||p.imie_nazwisko||'').replaceAll('"','&quot;')}" placeholder="Podpis na dokumentach">
+        <input id="prof_badge_${p.id}" value="${String(p.numer_sluzbowy || '').replaceAll('"','&quot;')}" placeholder="Numer służbowy">
+        <input id="prof_signature_${p.id}" value="${String(p.podpis || p.imie_nazwisko || '').replaceAll('"','&quot;')}" placeholder="Podpis na dokumentach">
         <select id="prof_role_${p.id}">
           <option value="funkcjonariusz" ${p.rola==='funkcjonariusz'?'selected':''}>funkcjonariusz</option>
           <option value="zastepca" ${p.rola==='zastepca'?'selected':''}>zastepca</option>
@@ -490,22 +542,43 @@ async function loadProfiles(){
           <option value="admin" ${p.rola==='admin'?'selected':''}>admin</option>
         </select>
       </div>
+
       <div class="action-row">
         <button class="btn-primary" onclick="saveOfficerProfile('${p.id}')">Zapisz zmiany</button>
         <button class="btn-light" onclick="regenerateOfficerPin('${p.id}')">Nowy PIN</button>
         <button class="btn-danger" onclick="deleteOfficerProfile('${p.id}')">Usuń konto</button>
       </div>
-    </div>`).join('')||'<div class="empty">Brak funkcjonariuszy.</div>';
+    </div>
+  `).join('') || '<div class="empty">Brak funkcjonariuszy.</div>';
+
   await loadRankRates();
 }
+
 async function saveOfficerProfile(id){
-  if(!isCommander())return alert('Brak uprawnień.');
-  const name=swdText(`prof_name_${id}`);
-  const rank=document.getElementById(`prof_rank_${id}`)?.value||'';
-  const login=slugifyName(name);
-  const patch={imie_nazwisko:name,login_name:login,email:`${login}@swd.local`,stopien:rank,numer_sluzbowy:swdText(`prof_badge_${id}`),podpis:swdText(`prof_signature_${id}`)||name,stawka_godzinowa:Number(getRateForRank(rank)||0),rola:document.getElementById(`prof_role_${id}`)?.value||'funkcjonariusz'};
-  const {error}=await supabaseClient.from('profile').update(patch).eq('id',id);
-  if(error)return alert(error.message);
+  if(!isCommander()) return alert('Brak uprawnień.');
+
+  const name = swdText(`prof_name_${id}`);
+  const rank = document.getElementById(`prof_rank_${id}`)?.value || '';
+  const login = slugifyName(name);
+
+  const patch = {
+    imie_nazwisko: name,
+    login_name: login,
+    email: `${login}@swd.local`,
+    stopien: rank,
+    numer_sluzbowy: swdText(`prof_badge_${id}`),
+    podpis: swdText(`prof_signature_${id}`) || name,
+    stawka_godzinowa: Number(getRateForRank(rank) || 0),
+    rola: document.getElementById(`prof_role_${id}`)?.value || 'funkcjonariusz'
+  };
+
+  const { error } = await supabaseClient.from('profile').update(patch).eq('id', id);
+  if(error) return alert(error.message);
+
+  if(currentProfile?.id === id){
+    currentProfile = {...currentProfile, ...patch};
+  }
+
   await loadProfiles();
   alert('Zapisano zmiany.');
 }
