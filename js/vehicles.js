@@ -56,3 +56,30 @@ async function openVehicleHistoryEntry(id){
  document.body.insertAdjacentHTML('beforeend',`<div class="vehicle-modal-backdrop" id="vehicleHistoryEntryModal"><div class="vehicle-modal"><div class="vehicle-modal-head"><h3>Szczegóły pobrania</h3><button class="btn-light" onclick="closeVehicleModal('vehicleHistoryEntryModal')">Zamknij</button></div><div class="vehicle-details-grid"><div><small>Pojazd</small><b>${escapeHtml(k.pojazd||'-')}</b></div><div><small>Kryptonim</small><b>${escapeHtml(vehicleCleanKrypton(k.krypton))}</b></div><div><small>Pobrał</small><b>${escapeHtml(k.rozpoczecie_pobierajacy||k.created_by||'-')}</b></div><div><small>Data</small><b>${escapeHtml(k.rozpoczecie_data||'-')}</b></div><div><small>Godzina pobrania</small><b>${escapeHtml(k.rozpoczecie_godzina||'-')}</b></div><div><small>Godzina zdania</small><b>${escapeHtml(k.zakonczenie_godzina||'-')}</b></div><div><small>Przebieg start</small><b>${Number(k.rozpoczecie_przebieg||0).toLocaleString('pl-PL')} km</b></div><div><small>Przebieg koniec</small><b>${k.zakonczenie_przebieg?Number(k.zakonczenie_przebieg).toLocaleString('pl-PL')+' km':'-'}</b></div><div><small>Paliwo przy pobraniu</small><b>${Number(k.rozpoczecie_paliwo||0)}%</b></div><div><small>Paliwo przy zdaniu</small><b>${k.zakonczenie_paliwo!==null&&k.zakonczenie_paliwo!==undefined?Number(k.zakonczenie_paliwo)+'%':'-'}</b></div><div><small>Uszkodzenia</small><b>${k.uszkodzenia?'Tak':'Nie'}</b></div><div><small>Status</small><b>${escapeHtml(k.status||'-')}</b></div></div><div class="vehicle-history-note"><b>Uwagi przy pobraniu:</b><br>${escapeHtml(k.uwagi_pobrania||'-')}</div><div class="vehicle-history-note"><b>Uwagi przy zwrocie:</b><br>${escapeHtml(k.uwagi_zwrotu||'-')}</div><div class="vehicle-history-note"><b>Uwagi uszkodzeń:</b><br>${escapeHtml(k.uwagi_uszkodzenia||'-')}</div></div></div>`);
 }
 function closeVehicleModal(id){document.getElementById(id)?.remove()}
+
+/* SWD - POPRAWKA v3: wyszukiwarka bez utraty fokusu + wyśrodkowana tabela */
+function ensureVehicleSearchBox(){
+  const listBox=document.getElementById('pojazdyLista');
+  if(!listBox)return null;
+
+  let toolbar=document.getElementById('vehicleSearchToolbar');
+  if(!toolbar){
+    toolbar=document.createElement('div');
+    toolbar.id='vehicleSearchToolbar';
+    toolbar.className='vehicle-toolbar vehicle-toolbar-centered';
+    toolbar.innerHTML=`<input id="vehicleSearch" placeholder="Szukaj po kryptonimie, rejestracji, marce..." oninput="renderPojazdyLista()">`;
+    listBox.parentNode.insertBefore(toolbar,listBox);
+  }
+  return document.getElementById('vehicleSearch');
+}
+
+function renderPojazdyLista(){
+ const box=document.getElementById('pojazdyLista');if(!box)return;
+ const search=ensureVehicleSearchBox();
+ let list=[...(window.pojazdyLista||[])].sort((a,b)=>vehicleStatusOrder(a.status)-vehicleStatusOrder(b.status)||vehicleCleanKrypton(a.krypton).localeCompare(vehicleCleanKrypton(b.krypton),'pl',{numeric:true}));
+ const q=(search?.value||'').toLowerCase();
+ if(q)list=list.filter(v=>`${v.marka||''} ${v.model||''} ${v.krypton||''} ${v.numer_rejestracyjny||''} ${v.status||''}`.toLowerCase().includes(q));
+ box.innerHTML=`<div class="vehicle-table-wrap vehicle-table-centered"><table class="vehicle-table"><thead><tr><th>Status</th><th>Kryptonim</th><th>Pojazd</th><th>Nr rej.</th><th>Przebieg</th><th>Paliwo</th><th>Akcja</th></tr></thead><tbody>
+ ${list.map(v=>`<tr><td>${vehicleStatusBadge(v.status)}</td><td><b>${escapeHtml(vehicleCleanKrypton(v.krypton))}</b></td><td>${escapeHtml((v.marka||'')+' '+(v.model||''))}</td><td>${escapeHtml(v.numer_rejestracyjny||'')}</td><td>${Number(v.aktualny_przebieg||0).toLocaleString('pl-PL')} km</td><td>${Number(v.aktualne_paliwo||0)}%</td><td><button class="btn-light" onclick="openVehicleDetails(${v.id})">Szczegóły</button> ${vehicleRoleCanViewHistory()?`<button class="btn-light" onclick="openVehicleHistory(${v.id})">Historia</button>`:''}</td></tr>`).join('')||'<tr><td colspan="7">Brak pojazdów.</td></tr>'}
+ </tbody></table></div>`;
+}
