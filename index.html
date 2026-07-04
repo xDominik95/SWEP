@@ -55,6 +55,7 @@
       <button class="nav" onclick="showPage('vehicles', this)">🚓 Pojazdy</button>
       <button class="nav" onclick="showPage('documents', this)">📄 Dokumenty</button>
       <button class="nav" onclick="showPage('hours', this)">⏱️ Godziny służby</button>
+      <button class="nav" onclick="showPage('officerCards', this)">🪪 Karty funkcjonariuszy</button>
       <button class="nav" onclick="showPage('costs', this)">💸 Koszty</button>
       <button class="nav commander-only hidden" onclick="showPage('users', this)">👮 Funkcjonariusze</button>
       <button class="nav commander-only hidden" onclick="showPage('archive', this)">📁 Archiwum</button>
@@ -293,6 +294,20 @@
         </div>
       </section>
 
+      <section id="officerCards" class="page hidden">
+        <div class="panel">
+          <div class="section-head">
+            <div>
+              <h3>Karty funkcjonariuszy</h3>
+              <p>Karta zawiera podstawowe dane kadrowe, status służby i urlopu oraz dane do wypłaty.</p>
+            </div>
+            <button class="btn-light" onclick="loadOfficerCards()">Odśwież</button>
+          </div>
+
+          <div id="officerCardsList" class="officer-cards-grid"></div>
+        </div>
+      </section>
+
       <section id="users" class="page hidden">
         <div class="panel commander-only hidden">
           <h3>Utwórz konto funkcjonariusza</h3>
@@ -357,5 +372,6 @@
   <script src="js/hours.js"></script>
   <script src="js/costs.js"></script>
   <script src="js/duty-status.js"></script>
+  <script src="js/officer-cards.js"></script>
 </body>
 </html>
