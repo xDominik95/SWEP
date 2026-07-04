@@ -244,137 +244,43 @@
   margin-bottom:4px;
 }
 
-/* SWD v3 - służby RP i urlopy */
-.modal{position:fixed;inset:0;background:rgba(15,23,42,.65);display:flex;align-items:center;justify-content:center;z-index:9999}.modal-card{width:520px;max-width:92vw;background:#fff;border-radius:16px;padding:22px;box-shadow:0 20px 60px rgba(0,0,0,.35)}.service-active{background:#dcfce7;color:#166534;padding:14px;border-radius:12px;font-weight:900}.service-inactive{background:#f1f5f9;color:#334155;padding:14px;border-radius:12px;font-weight:900}.status.aktywna{background:#dcfce7;color:#166534}.status.oczekuje_na_zatwierdzenie,.status.do_weryfikacji{background:#fef3c7;color:#92400e}.status.odrzucona,.status.odrzucony{background:#fee2e2;color:#991b1b}.status.dluga_sluzba{background:#dbeafe;color:#1e40af}.status.zaakceptowana,.status.zaakceptowany{background:#dcfce7;color:#166534}.status.oczekuje{background:#fef3c7;color:#92400e}
+/* SWD - tabela pojazdów */
+.vehicle-toolbar{margin-bottom:12px}.vehicle-toolbar input{width:100%;padding:11px 13px;border:1px solid #cbd5e1;border-radius:10px;font-weight:600}.vehicle-table-wrap{width:100%;overflow:auto}.vehicle-table{width:100%;border-collapse:collapse;background:#fff;border-radius:12px;overflow:hidden}.vehicle-table th{background:#0b2b4d;color:#fff;text-align:left;padding:11px;font-size:13px}.vehicle-table td{border-bottom:1px solid #e2e8f0;padding:10px;font-size:13px;vertical-align:middle}.vehicle-table tbody tr:hover{background:#f8fafc}.vehicle-status-badge{font-weight:900;white-space:nowrap}.vehicle-modal-backdrop{position:fixed;inset:0;background:rgba(15,23,42,.66);z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px}.vehicle-modal{width:620px;max-width:96vw;max-height:92vh;overflow:auto;background:#fff;border-radius:18px;padding:20px;box-shadow:0 30px 80px rgba(0,0,0,.38)}.vehicle-modal-wide{width:1050px}.vehicle-modal-head{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:16px}.vehicle-modal-head h3{margin:0}.vehicle-details-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.vehicle-details-grid div{background:#f8fafc;border:1px solid #e2e8f0;border-radius:12px;padding:12px}.vehicle-details-grid small{display:block;color:#64748b;font-weight:800;margin-bottom:4px}.vehicle-details-grid b{color:#0b2b4d}.vehicle-history-note{margin-top:12px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:12px;padding:12px}
 
-/* SWD - koszty funkcjonariuszy */
-#costs textarea{
+/* SWD - pojazdy v3: wyszukiwarka nad tabelą i wyśrodkowanie */
+.vehicle-toolbar-centered{
+  max-width:1050px;
+  margin:0 auto 14px auto;
+}
+.vehicle-toolbar-centered input{
   width:100%;
   box-sizing:border-box;
-  padding:12px;
-  border:1px solid #cbd5e1;
-  border-radius:10px;
-  resize:vertical;
-  font-family:inherit;
 }
-.status.oczekuje{
-  background:#fef3c7;
-  color:#92400e;
+.vehicle-table-centered{
+  max-width:1100px;
+  margin:0 auto;
 }
-.status.zaakceptowany{
-  background:#dcfce7;
-  color:#166534;
-}
-.status.odrzucony{
-  background:#fee2e2;
-  color:#991b1b;
+.vehicle-table-centered .vehicle-table{
+  margin:0 auto;
 }
 
-/* SWD - koszty auto pojazd */
-.cost-vehicle-info{
-  background:#f8fafc;
-  border:1px solid #e2e8f0;
-  border-radius:10px;
-  padding:10px 12px;
-  margin:10px 0;
-  color:#0b2b4d;
-  font-size:13px;
-}
-#costVehicle[readonly]{
-  background:#f8fafc;
-  color:#334155;
-}
+.vehicle-history-row{cursor:pointer}.vehicle-history-row:hover{background:#eaf2ff!important}
 
-/* SWD - Stan służby */
-.duty-panel{max-width:1200px;margin-left:auto;margin-right:auto}
-.duty-stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px;margin-top:14px}
-.duty-card{border:1px solid #dbe4ef;background:#fff;border-radius:16px;padding:16px;text-align:left;cursor:pointer;box-shadow:0 6px 18px rgba(15,23,42,.07);transition:.15s}
-.duty-card:hover{transform:translateY(-2px);box-shadow:0 10px 24px rgba(15,23,42,.12)}
-.duty-card span{font-size:26px;display:block;margin-bottom:8px}
-.duty-card b{font-size:30px;color:#0b2b4d;display:block}
-.duty-card small{color:#52637a;font-weight:800}
-.duty-mini-list{margin-top:18px}
-.duty-mini-row{display:flex;align-items:center;gap:10px;padding:10px 12px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:12px;margin-bottom:8px}
-.duty-mini-row small{margin-left:auto;color:#64748b}
-.duty-dot{width:10px;height:10px;background:#22c55e;border-radius:50%;box-shadow:0 0 0 4px rgba(34,197,94,.15)}
-.duty-modal-backdrop{position:fixed;inset:0;background:rgba(15,23,42,.65);z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px}
-.duty-modal{width:950px;max-width:96vw;max-height:90vh;overflow:auto;background:#fff;border-radius:18px;padding:20px;box-shadow:0 30px 80px rgba(0,0,0,.38)}
-.duty-modal-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:15px}
-.duty-modal-head h3{margin:0}
-.duty-table-wrap{width:100%;overflow:auto}
-.duty-table{width:100%;border-collapse:collapse}
-.duty-table th{background:#0b2b4d;color:#fff;text-align:left;padding:11px}
-.duty-table td{padding:10px;border-bottom:1px solid #e2e8f0}
-@media(max-width:900px){.duty-stats{grid-template-columns:repeat(2,minmax(0,1fr))}}
-
-/* SWD v4.1 - Karty funkcjonariuszy */
-.officer-cards-grid{
-  display:grid;
-  grid-template-columns:repeat(auto-fill,minmax(330px,1fr));
-  gap:14px;
-}
-.officer-card{
-  background:#fff;
-  border:1px solid #dbe4ef;
-  border-radius:16px;
-  padding:16px;
-  box-shadow:0 6px 18px rgba(15,23,42,.07);
-}
-.officer-card-head{
+/* SWD - akcje pojazdów */
+.vehicle-actions{
   display:flex;
-  justify-content:space-between;
-  gap:12px;
-  align-items:flex-start;
-  margin-bottom:12px;
+  flex-wrap:wrap;
+  gap:6px;
 }
-.officer-card h4{
-  margin:0 0 4px 0;
-  color:#0b2b4d;
-}
-.officer-card p{
-  margin:0;
-  color:#52637a;
-}
-.officer-status{
+.vehicle-actions button{
   white-space:nowrap;
-  padding:7px 10px;
-  border-radius:999px;
-  font-weight:900;
-  font-size:12px;
 }
-.officer-status.active{background:#dcfce7;color:#166534}
-.officer-status.leave{background:#fef3c7;color:#92400e}
-.officer-status.off{background:#e2e8f0;color:#334155}
-.officer-data-grid{
-  display:grid;
-  grid-template-columns:repeat(2,minmax(0,1fr));
-  gap:10px;
+
+/* SWD - fix kliknięć pojazdów */
+.vehicle-actions button{
+  pointer-events:auto!important;
+  position:relative;
+  z-index:2;
 }
-.officer-data-grid div{
-  background:#f8fafc;
-  border:1px solid #e2e8f0;
-  border-radius:12px;
-  padding:10px;
-}
-.officer-data-grid small{
-  display:block;
-  color:#64748b;
-  font-weight:800;
-  margin-bottom:3px;
-}
-.officer-data-grid b{
-  color:#0b2b4d;
-  word-break:break-word;
-}
-.officer-note{
-  margin-top:10px;
-  background:#f8fafc;
-  border:1px solid #e2e8f0;
-  border-radius:12px;
-  padding:10px;
-}
-.officer-edit-box{
-  margin-top:12px;
-  padding-top:12px;
-  border-top:1px solid #e2e8f0;
-}
+.vehicle-history-row{cursor:pointer}
+.vehicle-history-row:hover{background:#eaf2ff!important}
