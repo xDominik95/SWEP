@@ -1,26 +1,22 @@
-SWD - koszty: auto-uzupełnianie pojazdu
+SWD - Stan służby
 
-Zmiany:
-- w formularzu kosztów numer rejestracyjny jest listą wyboru z tabeli pojazdy,
-- po wyborze rejestracji system sam uzupełnia markę i model,
-- pokazuje też kryptonim, przebieg i paliwo,
-- funkcjonariusz wpisuje tylko datę, pojazd z listy, kwotę i opis.
-
-Najpierw uruchom SQL:
-sql/swd-koszty-auto-pojazd.sql
+Dodane:
+- kafelek Funkcjonariusze na służbie,
+- kafelek Patrole aktywne,
+- kafelek Pobrane pojazdy,
+- kafelek Urlopy,
+- lista osób aktualnie na służbie,
+- kliknięcie kafelka otwiera szczegółową listę,
+- automatyczne odświeżanie co 30 sekund.
 
 Podmień:
 - index.html
 - style.css
-- js/costs.js
 
-Nie podmieniaj:
-- js/app.js
-- js/hours.js
-- js/vehicles.js
-- js/documents.js
-- js/config.js
+Dodaj:
+- js/duty-status.js
 
+SQL nie jest potrzebny.
 
-Kontrola składni costs.js:
+Kontrola składni duty-status.js:
 OK
