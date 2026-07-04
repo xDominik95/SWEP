@@ -55,6 +55,7 @@
       <button class="nav" onclick="showPage('vehicles', this)">🚓 Pojazdy</button>
       <button class="nav" onclick="showPage('documents', this)">📄 Dokumenty</button>
       <button class="nav" onclick="showPage('hours', this)">⏱️ Godziny służby</button>
+      <button class="nav" onclick="showPage('costs', this)">💸 Koszty</button>
       <button class="nav commander-only hidden" onclick="showPage('users', this)">👮 Funkcjonariusze</button>
       <button class="nav commander-only hidden" onclick="showPage('archive', this)">📁 Archiwum</button>
       <button class="nav commander-only hidden" onclick="showPage('activity', this)">📊 Aktywność</button>
@@ -218,6 +219,54 @@
       </section>
       <div id="unfinishedServiceModal" class="modal hidden"><div class="modal-card"><h3>Nie zakończyłeś poprzedniej służby</h3><p>Wpisz godzinę zakończenia i wyjaśnienie. Wpis trafi do dowódcy/zastępcy.</p><input id="unfinishedServiceId" type="hidden"><label>Godzina zakończenia</label><input id="unfinishedEndTime" type="time"><label>Wyjaśnienie</label><textarea id="unfinishedExplanation" rows="4" placeholder="Wyjaśnienie"></textarea><div class="action-row"><button class="btn-primary" onclick="submitUnfinishedService()">Wyślij do zatwierdzenia</button></div><div id="unfinishedMsg" class="msg"></div></div></div>
 
+      <section id="costs" class="page hidden">
+        <div class="panel">
+          <div class="section-head">
+            <div>
+              <h3>Dodatkowe koszty</h3>
+              <p>Wpisz koszt poniesiony podczas służby. Po akceptacji dowódcy/zastępcy kwota zostanie doliczona do wypłaty.</p>
+            </div>
+            <button class="btn-light" onclick="loadCostsModule()">Odśwież</button>
+          </div>
+
+          <div class="grid-4">
+            <input id="costDate" type="date">
+            <input id="costVehicle" placeholder="Marka i model pojazdu">
+            <input id="costPlate" placeholder="Numer rejestracyjny">
+            <input id="costAmount" type="number" placeholder="Kwota">
+          </div>
+
+          <textarea id="costDescription" rows="4" placeholder="Opis kosztu, np. naprawa radiowozu, wymiana opony, holowanie itd."></textarea>
+
+          <div class="action-row">
+            <button class="btn-primary" onclick="submitCostRequest()">Wyślij do rozpatrzenia</button>
+          </div>
+
+          <div id="costMsg" class="msg"></div>
+        </div>
+
+        <div class="panel">
+          <h3>Moje koszty</h3>
+          <div id="myCostsList" class="list"></div>
+        </div>
+
+        <div class="panel commander-only hidden">
+          <div class="section-head">
+            <div>
+              <h3>Koszty do rozpatrzenia</h3>
+              <p>Akceptacja dolicza kwotę do wypłaty funkcjonariusza.</p>
+            </div>
+            <button class="btn-light" onclick="loadPendingCosts()">Odśwież</button>
+          </div>
+          <div id="pendingCostsList" class="list"></div>
+        </div>
+
+        <div class="panel commander-only hidden">
+          <h3>Historia kosztów</h3>
+          <div id="allCostsList" class="list"></div>
+        </div>
+      </section>
+
       <section id="users" class="page hidden">
         <div class="panel commander-only hidden">
           <h3>Utwórz konto funkcjonariusza</h3>
@@ -280,5 +329,6 @@
   <script src="js/vehicles.js"></script>
   <script src="js/documents.js"></script>
   <script src="js/hours.js"></script>
+  <script src="js/costs.js"></script>
 </body>
 </html>
