@@ -107,3 +107,54 @@ if(typeof showPage === 'function' && !window._dutyStatusShowPagePatched){
   }
 }
 setTimeout(()=>loadDutyStatus(),1000);
+
+/* SWD - poprawka zliczania stanu służby v2
+   Liczy aktywnych również przy starszych wpisach:
+   - status = aktywna
+   - albo brak end_at / brak zakonczenie
+   - albo zakonczenie = "trwa"
+*/
+
+async function loadDutyStatus(){
+  if(!window.supabaseClient)return;
+
+  const today = dutyToday();
+
+  const [servicesRes, patrolsRes, leavesRes] = await Promise.all([
+    supabaseClient.from('sluzby').select('*').order('created_at',{ascending:false}).limit(500),
+    supabaseClient.from('karty_pojazdow').select('*').eq('aktywna',true).order('created_at',{ascending:false}).limit(300),
+    supabaseClient.from('urlopy').select('*').eq('status','zaakceptowany').lte('data_od',today).gte('data_do',today).order('created_at',{ascending:false}).limit(300)
+  ]);
+
+  const allServices = servicesRes.data || [];
+
+  dutyStatusCache.officers = allServices.filter(s=>{
+    const status=String(s.status||'').toLowerCase();
+    const zak=String(s.zakonczenie||'').toLowerCase().trim();
+
+    if(status === 'aktywna') return true;
+    if(status === 'w służbie' || status === 'w sluzbie') return true;
+    if(zak === 'trwa') return true;
+
+    // Starsze wpisy: rozpoczęcie jest, a zakończenia nie ma.
+    if(s.rozpoczecie && !s.zakonczenie && !s.end_at && status !== 'odrzucona' && status !== 'zaakceptowana') return true;
+
+    return false;
+  });
+
+  dutyStatusCache.patrols = patrolsRes.data || [];
+  dutyStatusCache.vehicles = patrolsRes.data || [];
+  dutyStatusCache.leaves = leavesRes.data || [];
+
+  setDutyText('dutyOfficersCount', dutyStatusCache.officers.length);
+  setDutyText('dutyPatrolsCount', dutyStatusCache.patrols.length);
+  setDutyText('dutyVehiclesCount', dutyStatusCache.vehicles.length);
+  setDutyText('dutyLeavesCount', dutyStatusCache.leaves.length);
+
+  renderDutyMiniList();
+
+  const box=document.getElementById('dutyOfficersMiniList');
+  if(box && servicesRes.error){
+    box.innerHTML=`<div class="empty">Błąd pobierania służb: ${dutyEscape(servicesRes.error.message)}</div>`;
+  }
+}
