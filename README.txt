@@ -1,33 +1,17 @@
-SWD 2.1 - PEŁNA WERSJA
+SWD 2.2 - numeracja dokumentów i własny podpis
 
-Ta paczka scala wszystkie dotychczasowe poprawki w jedną wersję.
+Dodane:
+- numeracja dokumentów w formacie NS/0001/2026, WU/0002/2026, PZD/0003/2026,
+- numer dokumentu zapisuje się w bazie i w treści dokumentu,
+- każdy funkcjonariusz może mieć własny podpis,
+- podpis edytujesz w panelu Funkcjonariusze,
+- przy tworzeniu konta można wpisać podpis na dokumentach.
 
-Zawiera:
-- logowanie PIN,
-- tworzenie kont przez dowódcę/admina,
-- sesję po odświeżeniu strony,
-- edycję funkcjonariuszy,
-- stopnie i stawki,
-- godziny służby i wypłaty,
-- reset godzin od ostatniej wypłaty,
-- pojazdy i karty pojazdów,
-- dokumenty z podpisami,
-- checkboxy zamiast nawiasów,
-- poprawione pokwitowanie PZD,
-- jeden pełny plik SQL.
+Najpierw uruchom SQL:
+sql/swd-2-2-numeracja-podpis.sql
 
-INSTALACJA:
-1. Uruchom w Supabase:
-   sql/swd-2-1-full.sql
-
-2. W js/config.js wpisz swoje dane Supabase:
-   SUPABASE_URL
-   SUPABASE_KEY
-
-3. Podmień CAŁĄ zawartość repozytorium plikami z tej paczki.
-
-4. Commit -> Push -> Cloudflare Deploy
-
-5. Na stronie użyj Ctrl + F5.
-
-Od tej wersji kolejne poprawki powinny być robione na SWD 2.1, żeby nic już nie znikało.
+Podmień:
+- index.html
+- style.css
+- js/app.js
+- js/documents.js

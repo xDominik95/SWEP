@@ -388,3 +388,49 @@ function templatePZD(){
     </div>
   </div>`;
 }
+
+/* SWD 2.2 - numeracja dokumentów + własny podpis */
+function swdOfficerSignature(){
+  const custom=(currentProfile?.podpis||'').trim();
+  const email=currentUser?.email||currentProfile?.email||'';
+  const name=(currentProfile?.imie_nazwisko||'').trim();
+  if(custom)return custom;
+  if(name && name!==email)return name;
+  return 'podpis funkcjonariusza';
+}
+function swdOfficerNameOnly(){return swdOfficerSignature();}
+function swdDocNumberLabel(number){
+  return `<div class="swd-doc-number">Nr dokumentu: <b>${policeEsc(number||'nadany przy zapisie')}</b></div>`;
+}
+function attachDocNumberToHtml(html,number){
+  if(!html)return html;
+  if(html.includes('class="swd-doc-number"'))return html.replace(/<div class="swd-doc-number">.*?<\/div>/,swdDocNumberLabel(number));
+  return html.replace(/(<div class="[^"]*police-document[^"]*"[^>]*>)/,`$1${swdDocNumberLabel(number)}`);
+}
+async function policeGenerateNumber(type){
+  const {data,error}=await supabaseClient.from('numeracja_dokumentow').select('*').eq('typ',type).single();
+  const year=new Date().getFullYear();
+  const meta=POLICE_DOC_META[type]||{prefix:'DOC'};
+  if(error||!data)return `${meta.prefix}/${String(Date.now()).slice(-4)}/${year}`;
+  const next=data.rok!==year?1:Number(data.ostatni_numer||0)+1;
+  await supabaseClient.from('numeracja_dokumentow').update({rok:year,ostatni_numer:next}).eq('typ',type);
+  return `${data.prefix}/${String(next).padStart(4,'0')}/${year}`;
+}
+function signatureBlock(label='sporządzający dokument'){
+  return `<div class="swd-signature-block"><div class="swd-signature-label">${label}</div><div class="swd-hand-signature">${policeEsc(swdOfficerSignature())}</div><div class="swd-signature-caption">(podpis funkcjonariusza)</div></div>`;
+}
+async function policeDocSave(){
+  const type=document.getElementById('policeDocType')?.value||policeDocCurrent;
+  const meta=POLICE_DOC_META[type];
+  const doc=document.querySelector('.police-document');
+  if(!doc)return alert('Brak dokumentu.');
+  const number=await policeGenerateNumber(type);
+  const html=attachDocNumberToHtml(doc.outerHTML,number);
+  const row={status:'zapisany',typ_dokumentu:type,tytul:meta.title,numer_dokumentu:number,funkcjonariusz:currentProfile?.imie_nazwisko||currentProfile?.login_name||currentUser?.email,stopien:currentProfile?.stopien||'',numer_sluzbowy:currentProfile?.numer_sluzbowy||'',tresc:{html,plainText:doc.innerText.slice(0,4000),template:'policyjny-v2.2',podpis:swdOfficerSignature()}};
+  const {error}=await supabaseClient.from('dokumenty').insert(row);
+  const m=document.getElementById('policeDocMsg');
+  if(error){if(m){m.textContent=error.message;m.style.color='#b00020'}return;}
+  if(m){m.textContent=`Dokument zapisany. Numer: ${number}`;m.style.color='#187a2f'}
+  policeDocRender();
+  policeDocLoadMine();
+}

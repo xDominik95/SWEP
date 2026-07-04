@@ -243,3 +243,7 @@
   line-height:34px!important;
   margin-bottom:4px;
 }
+
+/* SWD 2.2 - numeracja dokumentu i własny podpis */
+.swd-doc-number{text-align:right;font-family:Arial,sans-serif;font-size:13px;margin-bottom:12px}
+.swd-profile-sign-preview{font-family:"Brush Script MT","Segoe Script","Lucida Handwriting","Comic Sans MS",cursive;color:#14328a;font-size:25px}
