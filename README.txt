@@ -1,6 +1,13 @@
-Najpierw SQL: sql/swd-wyplaty-powiadomienia-archiwum.sql
-Podmień index.html i style.css. Dodaj js/payments.js, js/notifications.js, js/archive-advanced.js.
+SWD - poprawka listy pojazdów v2
 
-payments.js: OK
-notifications.js: OK
-archive-advanced.js: OK
+Ta wersja NIE filtruje pojazdów po statusie przy wyświetlaniu listy.
+Dodatkowo obsługuje różne nazwy kolumn w tabeli pojazdy.
+
+Podmień:
+- js/vehicles.js
+- style.css
+
+SQL nie jest potrzebny.
+
+Kontrola składni:
+OK

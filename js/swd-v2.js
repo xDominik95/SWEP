@@ -195,7 +195,7 @@ function renderDocumentFormV2() {
     <div class="doc-paper" id="docPreview">
       <div class="doc-paper-header">
         <div>
-          <strong>KOMENDA MIEJSKA POLICJI W KRAKOWIE</strong><br>
+          <strong>KOMENDA WOJEWÓDZKA POLICJI W KRAKOWIE</strong><br>
           System SWD
         </div>
         <div>

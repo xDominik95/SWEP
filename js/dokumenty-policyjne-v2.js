@@ -80,7 +80,7 @@ function templateSPB(){
     <div class="spb-stamp">
       <div>SPORZĄDZIŁ:</div>
       <div contenteditable="true" style="font-size:20px;margin-top:8px;">${policeEsc(policeOfficer())}</div>
-      <div>KMP KRAKÓW</div>
+      <div>KWP KRAKÓW</div>
     </div>
   </div>`;
 }

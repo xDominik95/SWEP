@@ -29,7 +29,7 @@ function templateNotatkaUrzedowa(){
 }
 function templateSimple(title){
   return `<div class="police-a4 police-document" data-doc-title="${policeEsc(title)}">
-    <div class="police-top"><div><div class="nu-line" contenteditable="true" style="width:240px">KOMENDA MIEJSKA POLICJI W KRAKOWIE</div><div class="nu-line" contenteditable="true" style="width:240px">${policeEsc(policeOfficer())}</div></div><div>Kraków, dn. ${ce('130px')}</div></div>
+    <div class="police-top"><div><div class="nu-line" contenteditable="true" style="width:240px">KOMENDA WOJEWÓDZKA POLICJI W KRAKOWIE</div><div class="nu-line" contenteditable="true" style="width:240px">${policeEsc(policeOfficer())}</div></div><div>Kraków, dn. ${ce('130px')}</div></div>
     <h2>${policeEsc(title)}</h2><div class="police-row">W dniu ${ce('90px')} o godz. ${ce('70px')} w miejscowości ${ce('220px')}</div>
     ${Array.from({length:25}).map(longLine).join('')}<div class="signature-place">podpis funkcjonariusza</div></div>`;
 }

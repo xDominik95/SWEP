@@ -157,7 +157,7 @@ function doc2RenderForm(){
   document.getElementById('doc2FormHost').innerHTML = `
     <div class="doc2-paper" id="doc2Preview">
       <div class="doc2-paper-head">
-        <div><strong>KOMENDA MIEJSKA POLICJI W KRAKOWIE</strong><br>System SWD</div>
+        <div><strong>KOMENDA WOJEWÓDZKA POLICJI W KRAKOWIE</strong><br>System SWD</div>
         <div>Kraków, dn. <input id="doc2_data_sporzadzenia" type="date" value="${doc2Today()}"></div>
       </div>
 
