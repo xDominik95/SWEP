@@ -11,11 +11,11 @@ function vEsc(v){
 }
 
 function vCanManage(){
-  return ['admin','dowodca','zastepca'].includes(window.currentProfile?.rola);
+  return ['admin','dowodca','zastepca'].includes(currentProfile?.rola);
 }
 
 function vCanHistory(){
-  return ['admin','dowodca','zastepca'].includes(window.currentProfile?.rola);
+  return ['admin','dowodca','zastepca'].includes(currentProfile?.rola);
 }
 
 function vVal(obj, keys, def=''){
