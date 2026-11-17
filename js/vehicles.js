@@ -241,6 +241,8 @@ function prefillEditPojazd(id){
 
   const title=document.getElementById('pojazdFormTitle');
   if(title)title.textContent='Edytuj radiowóz';
+  const formPanel=document.getElementById('pojazdFormTitle')?.closest('.panel');
+  if(formPanel)formPanel.classList.remove('hidden');
 
   document.getElementById('pojazdMarka')?.scrollIntoView({behavior:'smooth',block:'center'});
 }
