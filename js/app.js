@@ -349,11 +349,11 @@ async function loadProfiles(){
         </select>
         <input id="prof_badge_${p.id}" value="${String(p.numer_sluzbowy||'').replaceAll('"','&quot;')}" placeholder="Numer służbowy">
         <select id="prof_role_${p.id}">
-          <option value="funkcjonariusz" ${p.rola==='funkcjonariusz'?'selected':''}>funkcjonariusz</option>
-          <option value="zastepca" ${p.rola==='zastepca'?'selected':''}>zastepca</option>
-          <option value="kadrowiec" ${p.rola==='kadrowiec'?'selected':''}>kadrowiec</option>
-          <option value="dowodca" ${p.rola==='dowodca'?'selected':''}>dowodca</option>
-          <option value="admin" ${p.rola==='admin'?'selected':''}>admin</option>
+          <option value="funkcjonariusz" ${p.rola==='funkcjonariusz'?'selected':''}>Funkcjonariusz</option>
+          <option value="kadrowiec" ${p.rola==='kadrowiec'?'selected':''}>Kadrowiec</option>
+          <option value="zastepca" ${p.rola==='zastepca'?'selected':''}>Zastępca dowódcy</option>
+          <option value="dowodca" ${p.rola==='dowodca'?'selected':''}>Dowódca</option>
+          <option value="admin" ${p.rola==='admin'?'selected':''}>Admin</option>
         </select>
       </div>
       <div class="action-row">
@@ -537,11 +537,11 @@ async function loadProfiles(){
         <input id="prof_badge_${p.id}" value="${String(p.numer_sluzbowy || '').replaceAll('"','&quot;')}" placeholder="Numer służbowy">
         <input id="prof_signature_${p.id}" value="${String(p.podpis || p.imie_nazwisko || '').replaceAll('"','&quot;')}" placeholder="Podpis na dokumentach">
         <select id="prof_role_${p.id}">
-          <option value="funkcjonariusz" ${p.rola==='funkcjonariusz'?'selected':''}>funkcjonariusz</option>
-          <option value="zastepca" ${p.rola==='zastepca'?'selected':''}>zastepca</option>
-          <option value="kadrowiec" ${p.rola==='kadrowiec'?'selected':''}>kadrowiec</option>
-          <option value="dowodca" ${p.rola==='dowodca'?'selected':''}>dowodca</option>
-          <option value="admin" ${p.rola==='admin'?'selected':''}>admin</option>
+          <option value="funkcjonariusz" ${p.rola==='funkcjonariusz'?'selected':''}>Funkcjonariusz</option>
+          <option value="kadrowiec" ${p.rola==='kadrowiec'?'selected':''}>Kadrowiec</option>
+          <option value="zastepca" ${p.rola==='zastepca'?'selected':''}>Zastępca dowódcy</option>
+          <option value="dowodca" ${p.rola==='dowodca'?'selected':''}>Dowódca</option>
+          <option value="admin" ${p.rola==='admin'?'selected':''}>Admin</option>
         </select>
       </div>
 
