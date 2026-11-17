@@ -351,6 +351,7 @@ async function loadProfiles(){
         <select id="prof_role_${p.id}">
           <option value="funkcjonariusz" ${p.rola==='funkcjonariusz'?'selected':''}>funkcjonariusz</option>
           <option value="zastepca" ${p.rola==='zastepca'?'selected':''}>zastepca</option>
+          <option value="kadrowiec" ${p.rola==='kadrowiec'?'selected':''}>kadrowiec</option>
           <option value="dowodca" ${p.rola==='dowodca'?'selected':''}>dowodca</option>
           <option value="admin" ${p.rola==='admin'?'selected':''}>admin</option>
         </select>
@@ -538,6 +539,7 @@ async function loadProfiles(){
         <select id="prof_role_${p.id}">
           <option value="funkcjonariusz" ${p.rola==='funkcjonariusz'?'selected':''}>funkcjonariusz</option>
           <option value="zastepca" ${p.rola==='zastepca'?'selected':''}>zastepca</option>
+          <option value="kadrowiec" ${p.rola==='kadrowiec'?'selected':''}>kadrowiec</option>
           <option value="dowodca" ${p.rola==='dowodca'?'selected':''}>dowodca</option>
           <option value="admin" ${p.rola==='admin'?'selected':''}>admin</option>
         </select>

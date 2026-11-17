@@ -14,6 +14,10 @@ function vCanManage(){
   return ['admin','dowodca','zastepca'].includes(currentProfile?.rola);
 }
 
+function vCanEdit(){
+  return vCanManage() || currentProfile?.rola === 'kadrowiec';
+}
+
 function vCanHistory(){
   return ['admin','dowodca','zastepca'].includes(currentProfile?.rola);
 }
@@ -149,7 +153,8 @@ function renderPojazdyLista(){
             <td class="vehicle-actions">
               <button type="button" class="btn-light" data-v-details="${id}">Szczegóły</button>
               ${vCanHistory()?`<button type="button" class="btn-light" data-v-history="${id}">Historia</button>`:''}
-              ${vCanManage()?`<button type="button" class="btn-light" data-v-edit="${id}">Edytuj</button><button type="button" class="btn-danger" data-v-delete="${id}">Usuń</button>`:''}
+              ${vCanEdit()?`<button type="button" class="btn-light" data-v-edit="${id}">Edytuj</button>`:'' }
+              ${vCanManage()?`<button type="button" class="btn-danger" data-v-delete="${id}">Usuń</button>`:'' }
             </td>
           </tr>`;
         }).join('') || '<tr><td colspan="7">Brak pojazdów w bazie.</td></tr>'}
@@ -183,9 +188,10 @@ function formRow(){
 }
 
 async function addPojazd(){
-  if(!vCanManage())return vMsg('pojazdMsg','Brak uprawnień.',false);
-
   const id=document.getElementById('pojazdEditingId')?.value || '';
+  if(id && !vCanEdit())return vMsg('pojazdMsg','Brak uprawnień do edycji pojazdów.',false);
+  if(!id && !vCanManage())return vMsg('pojazdMsg','Dodawanie pojazdów jest dostępne tylko dla dowódcy, zastępcy lub administratora.',false);
+
   const row=formRow();
 
   if(!row.marka || !row.model || !row.krypton || !row.numer_rejestracyjny){
